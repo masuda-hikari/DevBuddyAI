@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devbuddy-ai"
+version = "0.1.0"
+description = "AI-Powered Developer Assistant - Code review, test generation, and bug fixing"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "DevBuddyAI Team", email = "team@devbuddy.ai"}
+]
+keywords = ["ai", "code-review", "testing", "developer-tools", "automation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.1.0",
+    "anthropic>=0.18.0",
+    "openai>=1.12.0",
+    "PyGithub>=2.1.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "black>=24.1.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+    "mypy>=1.8.0",
+]
+lint = [
+    "flake8>=7.0.0",
+    "pylint>=3.0.0",
+    "mypy>=1.8.0",
+]
+
+[project.scripts]
+devbuddy = "devbuddy.cli:main"
+
+[project.urls]
+Homepage = "https://devbuddy.ai"
+Documentation = "https://docs.devbuddy.ai"
+Repository = "https://github.com/devbuddy/devbuddy-ai"
+Issues = "https://github.com/devbuddy/devbuddy-ai/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/devbuddy"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

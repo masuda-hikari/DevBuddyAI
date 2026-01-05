@@ -1,0 +1,59 @@
+name: DevBuddyAI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install DevBuddyAI
+        run: pip install devbuddy-ai
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          echo "files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '\.py$' | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Run DevBuddyAI Review
+        if: steps.changed-files.outputs.files != ''
+        env:
+          DEVBUDDY_API_KEY: ${{ secrets.DEVBUDDY_API_KEY }}
+        run: |
+          devbuddy review ${{ steps.changed-files.outputs.files }} \
+            --severity medium \
+            -o review_output.txt
+
+      - name: Post review comment
+        if: steps.changed-files.outputs.files != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('review_output.txt', 'utf8');
+
+            if (output.includes('No issues found')) {
+              console.log('No issues found, skipping comment');
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## DevBuddyAI Code Review\n\n\`\`\`\n${output}\n\`\`\`\n\n*Powered by DevBuddyAI*`
+            });
