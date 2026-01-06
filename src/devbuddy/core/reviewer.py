@@ -4,35 +4,11 @@ CodeReviewer - AIコードレビューエンジン
 コードを解析し、バグ、スタイル問題、改善点を検出。
 """
 
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
+from devbuddy.core.models import Issue, ReviewResult
 from devbuddy.llm.client import LLMClient
 from devbuddy.llm.prompts import PromptTemplates
-from devbuddy.analyzers.python_analyzer import PythonAnalyzer
-
-
-@dataclass
-class Issue:
-    """レビュー指摘事項"""
-
-    level: str  # bug, warning, style, info
-    line: int
-    message: str
-    suggestion: Optional[str] = None
-    code_snippet: Optional[str] = None
-
-
-@dataclass
-class ReviewResult:
-    """レビュー結果"""
-
-    file_path: Path
-    issues: list[Issue] = field(default_factory=list)
-    summary: str = ""
-    success: bool = True
-    error: Optional[str] = None
 
 
 class CodeReviewer:
@@ -40,8 +16,16 @@ class CodeReviewer:
 
     def __init__(self, client: LLMClient):
         self.client = client
-        self.analyzer = PythonAnalyzer()
+        self._analyzer = None
         self.prompts = PromptTemplates()
+
+    @property
+    def analyzer(self):
+        """遅延インポートでPythonAnalyzerを取得"""
+        if self._analyzer is None:
+            from devbuddy.analyzers.python_analyzer import PythonAnalyzer
+            self._analyzer = PythonAnalyzer()
+        return self._analyzer
 
     def review_file(
         self,
@@ -80,9 +64,9 @@ class CodeReviewer:
         try:
             ai_response = self.client.complete(prompt)
             ai_issues = self._parse_ai_response(ai_response)
-        except Exception as e:
-            ai_issues = []
+        except Exception:
             # AIエラーは無視して静的解析結果のみ返す
+            ai_issues = []
 
         # 結果をマージ
         all_issues = static_issues + ai_issues
@@ -124,8 +108,6 @@ class CodeReviewer:
         """AIレスポンスを解析してIssueリストに変換"""
         issues = []
 
-        # レスポンスをパース（JSON形式を期待）
-        # 実際のパース処理はLLMのレスポンス形式に依存
         lines = response.strip().split("\n")
 
         for line in lines:
