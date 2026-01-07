@@ -1,0 +1,24 @@
+﻿{
+    "summary":  "DryRun: Claude実行スキップ",
+    "monetization_link":  "テスト実行",
+    "next_action":  "実際の実行",
+    "outputs":  [
+
+                ],
+    "ai_self_review":  {
+                           "quality":  "OK",
+                           "issues":  [
+
+                                      ],
+                           "confidence":  1
+                       },
+    "verification":  {
+                         "checks":  [
+                                        "DryRun"
+                                    ],
+                         "result":  "PASS"
+                     },
+    "dry_run":  true,
+    "task_id":  "init-002",
+    "failure_classification":  "none"
+}
