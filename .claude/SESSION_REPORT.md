@@ -21,11 +21,10 @@
 ## 今回のセッション作業
 
 ### 実施内容
-1. PyPI公開を試行（Trusted Publisher未設定のためブロック）
-2. PyPI公開手順書作成（docs/PYPI_PUBLISH_GUIDE.md）
-3. README.mdのリポジトリURL修正
-4. .gitignore更新（NULファイル除外）
-5. STATUS.md更新
+1. pyproject.toml のRepository URL修正（masuda-hikari/DevBuddyAI）
+2. DEVELOPMENT_LOG.md作成（ガバナンス要件対応）
+3. コード品質確認（flake8/mypy/pytest 全合格）
+4. GitHubへPush
 
 ### ブロッカー
 - **PyPI Trusted Publisher設定**（人間の作業が必要）
@@ -35,10 +34,9 @@
 
 | ファイル | 内容 |
 |---------|------|
-| docs/PYPI_PUBLISH_GUIDE.md | PyPI公開手順書（新規） |
-| README.md | リポジトリURL修正 |
-| .gitignore | NULファイル除外追加 |
-| STATUS.md | 状態更新 |
+| pyproject.toml | Repository URL修正 |
+| DEVELOPMENT_LOG.md | 新規作成 |
+| STATUS.md | 変更履歴追加 |
 | .claude/SESSION_REPORT.md | 本レポート |
 
 ## 収益化リンク
