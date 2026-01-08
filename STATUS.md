@@ -38,6 +38,8 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - `devbuddy --version`
 
 ## 最近の変更
+- 2026-01-09: pyproject.toml Repository URL修正（masuda-hikari/DevBuddyAI）
+- 2026-01-09: DEVELOPMENT_LOG.md追加
 - 2026-01-09: PyPI公開手順書作成
 - 2026-01-09: README.mdのリポジトリURL修正
 - 2026-01-09: pyproject.toml最新SPDX形式に更新
