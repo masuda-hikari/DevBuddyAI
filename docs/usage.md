@@ -1,7 +1,5 @@
-# 使用ガイド
-
+﻿# 使用ガイド
 ## 基本コマンド
-
 ### コードレビュー
 
 ```bash
@@ -22,7 +20,6 @@ devbuddy review src/ -o review_report.txt
 ```
 
 ### テスト生成
-
 ```bash
 # ファイル全体のテスト生成
 devbuddy testgen src/calculator.py
@@ -41,7 +38,6 @@ devbuddy testgen src/calculator.py --run
 ```
 
 ### バグ修正提案
-
 ```bash
 # 失敗テストの修正提案
 devbuddy fix tests/test_api.py
@@ -54,7 +50,6 @@ devbuddy fix tests/test_api.py --apply
 ```
 
 ### 設定管理
-
 ```bash
 # 設定ファイル初期化
 devbuddy config --init
@@ -93,7 +88,6 @@ ignore_patterns:
 ```
 
 ## 出力例
-
 ### コードレビュー結果
 
 ```
@@ -152,7 +146,7 @@ devbuddy review src/ --severity low
 
 ### 2. CI/CDへの統合
 ```bash
-# exit codeを利用
+# exit codeを活用
 devbuddy review src/ --severity high || exit 1
 ```
 
@@ -165,13 +159,11 @@ devbuddy testgen src/new_feature.py -o tests/test_new_feature.py
 pytest tests/test_new_feature.py
 
 # 3. 実装
-
-# 4. テスト再実行（成功を確認）
+# 4. テスト再実行（合格を確認）
 pytest tests/test_new_feature.py
 ```
 
 ## 高度な使用法
-
 ### GitHub Action連携
 
 ```yaml
