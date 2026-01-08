@@ -1,0 +1,16 @@
+# DevBuddyAI Configuration
+language: python
+style_guide: pep8
+
+review:
+  severity: medium
+  include_suggestions: true
+
+testgen:
+  framework: pytest
+  coverage_target: 80
+
+ignore_patterns:
+  - "*.generated.py"
+  - "migrations/*"
+  - "__pycache__/*"
