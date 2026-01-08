@@ -42,7 +42,8 @@ class LLMClient(BaseLLMClient):
         model: Optional[str] = None,
     ):
         self.api_key = api_key or os.environ.get("DEVBUDDY_API_KEY", "")
-        self.model = model or os.environ.get("DEVBUDDY_MODEL", "claude-3-opus-20240229")
+        default_model = "claude-3-opus-20240229"
+        self.model = model or os.environ.get("DEVBUDDY_MODEL", default_model)
 
         if not self.api_key:
             raise ValueError("API key is required")
@@ -84,7 +85,10 @@ class LLMClient(BaseLLMClient):
         try:
             import anthropic
         except ImportError:
-            raise ImportError("anthropic package is required. Install with: pip install anthropic")
+            raise ImportError(
+                "anthropic package is required. "
+                "Install with: pip install anthropic"
+            )
 
         client = anthropic.Anthropic(api_key=self.api_key)
 
@@ -97,14 +101,20 @@ class LLMClient(BaseLLMClient):
             ],
         )
 
-        return message.content[0].text
+        content = message.content[0]
+        if hasattr(content, "text"):
+            return str(content.text)
+        return ""
 
     def _complete_openai(self, prompt: str) -> str:
         """OpenAI APIを呼び出し"""
         try:
             import openai
         except ImportError:
-            raise ImportError("openai package is required. Install with: pip install openai")
+            raise ImportError(
+                "openai package is required. "
+                "Install with: pip install openai"
+            )
 
         client = openai.OpenAI(api_key=self.api_key)
 
@@ -134,9 +144,13 @@ class LLMClient(BaseLLMClient):
             str: AIのレスポンス
         """
         if self._api_type == "claude":
-            return self._complete_claude_with_system(system_prompt, user_prompt)
+            return self._complete_claude_with_system(
+                system_prompt, user_prompt
+            )
         else:
-            return self._complete_openai_with_system(system_prompt, user_prompt)
+            return self._complete_openai_with_system(
+                system_prompt, user_prompt
+            )
 
     def _complete_claude_with_system(
         self,
@@ -161,7 +175,10 @@ class LLMClient(BaseLLMClient):
             ],
         )
 
-        return message.content[0].text
+        content = message.content[0]
+        if hasattr(content, "text"):
+            return str(content.text)
+        return ""
 
     def _complete_openai_with_system(
         self,

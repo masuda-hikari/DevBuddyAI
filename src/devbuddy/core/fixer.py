@@ -76,7 +76,9 @@ class BugFixer:
             with open(test_path, encoding="utf-8") as f:
                 test_code = f.read()
         except Exception as e:
-            return FixResult(success=False, error=f"Failed to read test file: {e}")
+            return FixResult(
+                success=False, error=f"Failed to read test file: {e}"
+            )
 
         # ソースコードを読み込み（指定されている場合）
         source_code = None
@@ -96,7 +98,8 @@ class BugFixer:
 
         try:
             response = self.client.complete(prompt)
-            suggestions = self._parse_fix_response(response, source_path or test_path)
+            path_for_parse = source_path or test_path
+            suggestions = self._parse_fix_response(response, path_for_parse)
         except Exception as e:
             return FixResult(success=False, error=str(e))
 
@@ -135,7 +138,7 @@ class BugFixer:
         self, response: str, default_path: Path
     ) -> list[FixSuggestion]:
         """AIレスポンスを解析して修正提案リストに変換"""
-        suggestions = []
+        suggestions: list[Optional[FixSuggestion]] = []
 
         # レスポンスをパース
         # 期待形式:
@@ -145,14 +148,15 @@ class BugFixer:
         # ORIGINAL: 元のコード
         # REPLACEMENT: 修正後のコード
 
-        current = {}
+        current: dict[str, str] = {}
         lines = response.strip().split("\n")
 
         for line in lines:
             line = line.strip()
             if line.startswith("FILE:"):
                 if current:
-                    suggestions.append(self._create_suggestion(current, default_path))
+                    sugg = self._create_suggestion(current, default_path)
+                    suggestions.append(sugg)
                 current = {"file": line[5:].strip()}
             elif line.startswith("LINE:"):
                 current["line"] = line[5:].strip()
@@ -169,10 +173,11 @@ class BugFixer:
         return [s for s in suggestions if s is not None]
 
     def _create_suggestion(
-        self, data: dict, default_path: Path
+        self, data: dict[str, str], default_path: Path
     ) -> Optional[FixSuggestion]:
         """辞書からFixSuggestionを作成"""
-        if not all(k in data for k in ["description", "original", "replacement"]):
+        required_keys = ["description", "original", "replacement"]
+        if not all(k in data for k in required_keys):
             return None
 
         try:

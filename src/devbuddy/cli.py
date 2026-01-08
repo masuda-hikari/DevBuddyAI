@@ -26,17 +26,23 @@ def get_api_key() -> str:
     api_key = os.environ.get("DEVBUDDY_API_KEY")
     if not api_key:
         click.echo(
-            click.style("Error: DEVBUDDY_API_KEY environment variable not set", fg="red"),
+            click.style(
+                "Error: DEVBUDDY_API_KEY environment variable not set",
+                fg="red",
+            ),
             err=True,
         )
-        click.echo("Set it with: export DEVBUDDY_API_KEY=your_api_key", err=True)
+        click.echo(
+            "Set it with: export DEVBUDDY_API_KEY=your_api_key",
+            err=True,
+        )
         sys.exit(1)
     return api_key
 
 
 @click.group()
 @click.version_option(version=__version__, prog_name="devbuddy")
-def cli():
+def cli() -> None:
     """DevBuddyAI - AI駆動の開発者アシスタント
 
     コードレビュー、テスト生成、バグ修正提案を自動化します。
@@ -47,9 +53,15 @@ def cli():
 @cli.command()
 @click.argument("path", type=click.Path(exists=True))
 @click.option("--diff", is_flag=True, help="git diffのみをレビュー")
-@click.option("--severity", type=click.Choice(["low", "medium", "high"]), default="medium")
+@click.option(
+    "--severity",
+    type=click.Choice(["low", "medium", "high"]),
+    default="medium",
+)
 @click.option("--output", "-o", type=click.Path(), help="結果をファイルに出力")
-def review(path: str, diff: bool, severity: str, output: Optional[str]):
+def review(
+    path: str, diff: bool, severity: str, output: Optional[str]
+) -> None:
     """コードをレビューしてバグ、スタイル問題、改善点を指摘
 
     PATH: レビュー対象のファイルまたはディレクトリ
@@ -80,14 +92,18 @@ def review(path: str, diff: bool, severity: str, output: Optional[str]):
 
     # 結果表示
     click.echo("\n" + "=" * 50)
-    click.echo(click.style("DevBuddyAI Code Review Results", fg="cyan", bold=True))
+    click.echo(
+        click.style("DevBuddyAI Code Review Results", fg="cyan", bold=True)
+    )
     click.echo("=" * 50 + "\n")
 
     total_issues = {"bug": 0, "warning": 0, "style": 0, "info": 0}
 
     for result in all_results:
         if result.issues:
-            click.echo(click.style(f"\n{result.file_path}", fg="white", bold=True))
+            click.echo(
+                click.style(f"\n{result.file_path}", fg="white", bold=True)
+            )
             for issue in result.issues:
                 color = {
                     "bug": "red",
@@ -103,13 +119,16 @@ def review(path: str, diff: bool, severity: str, output: Optional[str]):
                 if issue.suggestion:
                     click.echo(f"    Suggestion: {issue.suggestion}")
 
-                total_issues[issue.level] = total_issues.get(issue.level, 0) + 1
+                count = total_issues.get(issue.level, 0) + 1
+                total_issues[issue.level] = count
 
     # サマリー
     click.echo("\n" + "-" * 50)
+    bugs = total_issues["bug"]
+    warnings = total_issues["warning"]
+    styles = total_issues["style"]
     click.echo(
-        f"Summary: {total_issues['bug']} bugs, {total_issues['warning']} warnings, "
-        f"{total_issues['style']} style issues"
+        f"Summary: {bugs} bugs, {warnings} warnings, {styles} style issues"
     )
 
     if output:
@@ -118,7 +137,9 @@ def review(path: str, diff: bool, severity: str, output: Optional[str]):
             for result in all_results:
                 f.write(f"\n{result.file_path}\n")
                 for issue in result.issues:
-                    f.write(f"  [{issue.level}] Line {issue.line}: {issue.message}\n")
+                    line = issue.line
+                    msg = issue.message
+                    f.write(f"  [{issue.level}] Line {line}: {msg}\n")
         click.echo(f"\nResults saved to: {output}")
 
 
@@ -126,7 +147,11 @@ def review(path: str, diff: bool, severity: str, output: Optional[str]):
 @click.argument("path", type=click.Path(exists=True))
 @click.option("--function", "-f", help="特定の関数のみテスト生成")
 @click.option("--output", "-o", type=click.Path(), help="出力先ファイル")
-@click.option("--framework", type=click.Choice(["pytest", "unittest"]), default="pytest")
+@click.option(
+    "--framework",
+    type=click.Choice(["pytest", "unittest"]),
+    default="pytest",
+)
 @click.option("--run", is_flag=True, help="生成後にテストを実行")
 def testgen(
     path: str,
@@ -134,7 +159,7 @@ def testgen(
     output: Optional[str],
     framework: str,
     run: bool,
-):
+) -> None:
     """関数/クラスのユニットテストを自動生成
 
     PATH: テスト対象のソースファイル
@@ -161,7 +186,8 @@ def testgen(
         if output:
             output_path = Path(output)
         else:
-            output_path = source_path.parent / "tests" / f"test_{source_path.name}"
+            test_name = f"test_{source_path.name}"
+            output_path = source_path.parent / "tests" / test_name
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -191,7 +217,7 @@ def testgen(
 @click.argument("test_path", type=click.Path(exists=True))
 @click.option("--source", "-s", type=click.Path(exists=True), help="ソースファイル")
 @click.option("--apply", is_flag=True, help="修正を自動適用")
-def fix(test_path: str, source: Optional[str], apply: bool):
+def fix(test_path: str, source: Optional[str], apply: bool) -> None:
     """失敗テストやバグに対する修正を提案
 
     TEST_PATH: 失敗しているテストファイル
@@ -202,7 +228,8 @@ def fix(test_path: str, source: Optional[str], apply: bool):
 
     click.echo(f"Analyzing failing tests: {test_path}")
 
-    result = fixer.suggest_fix(Path(test_path), source_path=Path(source) if source else None)
+    source_p = Path(source) if source else None
+    result = fixer.suggest_fix(Path(test_path), source_path=source_p)
 
     if result.suggestions:
         click.echo(click.style("\nSuggested Fixes:", fg="cyan", bold=True))
@@ -211,7 +238,8 @@ def fix(test_path: str, source: Optional[str], apply: bool):
             click.echo(f"   File: {suggestion.file_path}:{suggestion.line}")
             click.echo("   Change:")
             click.echo(click.style(f"   - {suggestion.original}", fg="red"))
-            click.echo(click.style(f"   + {suggestion.replacement}", fg="green"))
+            repl = suggestion.replacement
+            click.echo(click.style(f"   + {repl}", fg="green"))
 
         if apply:
             click.echo("\nApplying fixes...")
@@ -225,7 +253,7 @@ def fix(test_path: str, source: Optional[str], apply: bool):
 @cli.command()
 @click.option("--show", is_flag=True, help="現在の設定を表示")
 @click.option("--init", is_flag=True, help="設定ファイルを初期化")
-def config(show: bool, init: bool):
+def config(show: bool, init: bool) -> None:
     """DevBuddyAI設定を管理"""
     config_path = Path(".devbuddy.yaml")
 
@@ -256,14 +284,19 @@ ignore_patterns:
             with open(config_path, encoding="utf-8") as f:
                 click.echo(f.read())
         else:
-            click.echo("No config file found. Run 'devbuddy config --init' to create one.")
+            click.echo(
+                "No config file found. "
+                "Run 'devbuddy config --init' to create one."
+            )
     else:
-        click.echo("Use --show to view config or --init to create default config")
+        click.echo(
+            "Use --show to view config or --init to create default config"
+        )
 
 
 @cli.command()
 @click.option("--token", prompt=True, hide_input=True, help="APIトークン")
-def auth(token: str):
+def auth(token: str) -> None:
     """DevBuddyAIサービスに認証"""
     # 認証ロジック（将来実装）
     click.echo("Authenticating...")
@@ -271,7 +304,7 @@ def auth(token: str):
     click.echo("Your token has been saved.")
 
 
-def main():
+def main() -> None:
     """エントリポイント"""
     cli()
 
