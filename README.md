@@ -64,7 +64,7 @@ pip install devbuddy-ai
 
 Or install from source:
 ```bash
-git clone https://github.com/yourorg/devbuddy-ai.git
+git clone https://github.com/masuda-hikari/DevBuddyAI.git
 cd devbuddy-ai
 pip install -e .
 ```
