@@ -7,7 +7,8 @@ name = "devbuddy-ai"
 version = "0.1.0"
 description = "AI-Powered Developer Assistant - Code review, test generation, and bug fixing"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     {name = "DevBuddyAI Team", email = "team@devbuddy.ai"}
 ]
@@ -15,7 +16,6 @@ keywords = ["ai", "code-review", "testing", "developer-tools", "automation"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Quality Assurance",
