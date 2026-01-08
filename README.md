@@ -1,4 +1,4 @@
-# DevBuddyAI
+﻿# DevBuddyAI
 
 **AI-Powered Developer Assistant** - Your intelligent pair programmer that reviews code, generates tests, and suggests fixes.
 

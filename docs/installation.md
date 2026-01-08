@@ -1,15 +1,11 @@
-# インストールガイド
-
+﻿# インストールガイド
 ## 要件
 
 - Python 3.12以上
-- pip（最新版推奨）
+- pip（最新推奨版）
 - Git（GitHub連携時）
-
 ## インストール方法
-
-### PyPIからインストール（推奨）
-
+### PyPIからインストール（推奨版）
 ```bash
 pip install devbuddy-ai
 ```
@@ -29,11 +25,8 @@ pip install -e ".[dev]"
 ```
 
 ## APIキー設定
-
 DevBuddyAIはAI分析にClaude APIまたはOpenAI APIを使用します。
-
 ### 環境変数設定
-
 **Linux/macOS:**
 ```bash
 export DEVBUDDY_API_KEY=your_api_key_here
@@ -57,15 +50,12 @@ export DEVBUDDY_API_KEY=your_api_key_here
 ```
 
 ## インストール確認
-
 ```bash
 devbuddy --version
 ```
 
 正常にインストールされていれば、バージョン情報が表示されます。
-
 ## オプション依存関係
-
 ### 静的解析ツール
 
 ```bash
@@ -83,7 +73,7 @@ export GITHUB_TOKEN=your_github_token
 
 ### "command not found"エラー
 
-PATHにPythonのbin/Scriptsディレクトリが含まれているか確認:
+PATHにPythonのbin/Scriptsディレクトリが含まれているか確認
 ```bash
 python -m devbuddy --version
 ```

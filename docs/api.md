@@ -1,11 +1,10 @@
-# API リファレンス
+﻿# API リファレンス
 
 ## コアモジュール
 
 ### CodeReviewer
 
 コードレビューエンジン。
-
 ```python
 from devbuddy.core.reviewer import CodeReviewer
 from devbuddy.llm.client import LLMClient
@@ -30,7 +29,7 @@ for issue in result.issues:
 |------|-----|------|
 | file_path | Path | レビュー対象ファイル |
 | issues | list[Issue] | 検出された問題リスト |
-| summary | str | サマリー文字列 |
+| summary | str | サマリー文章 |
 | success | bool | 成功フラグ |
 | error | str | エラーメッセージ |
 
@@ -46,7 +45,6 @@ for issue in result.issues:
 ### TestGenerator
 
 テスト生成エンジン。
-
 ```python
 from devbuddy.core.generator import TestGenerator
 from devbuddy.llm.client import LLMClient
@@ -65,7 +63,7 @@ if result.success:
     print(result.test_code)
     print(f"Generated {result.test_count} tests")
 
-# 生成＆検証（自己検証ループ）
+# 生成→検証（自己検証ループ）
 result = generator.generate_and_verify(
     source_path=Path("src/calculator.py"),
     framework="pytest"
@@ -86,7 +84,6 @@ print(f"Verified: {result.verified}")
 ### BugFixer
 
 バグ修正エンジン。
-
 ```python
 from devbuddy.core.fixer import BugFixer
 from devbuddy.llm.client import LLMClient
@@ -115,8 +112,7 @@ for suggestion in result.suggestions:
 
 ### LLMClient
 
-LLM APIクライアント。Claude/OpenAI両対応。
-
+LLM APIクライアント（Claude/OpenAI両対応）
 ```python
 from devbuddy.llm.client import LLMClient
 
@@ -142,7 +138,6 @@ response = client.complete_with_system(
 ### MockLLMClient
 
 テスト用モッククライアント。
-
 ```python
 from devbuddy.llm.client import MockLLMClient
 
@@ -161,7 +156,6 @@ response = mock.complete("Please review this code")
 ### PythonAnalyzer
 
 Python静的解析エンジン。
-
 ```python
 from devbuddy.analyzers.python_analyzer import PythonAnalyzer, AnalysisConfig
 
@@ -194,7 +188,6 @@ classes = analyzer.get_classes(code)
 ### GitHubIntegration
 
 GitHub連携。
-
 ```python
 from devbuddy.integrations.github import GitHubIntegration, PRComment
 
@@ -218,7 +211,6 @@ github.post_review_comment(
 ### GitOperations
 
 ローカルGit操作。
-
 ```python
 from devbuddy.integrations.git import GitOperations
 
