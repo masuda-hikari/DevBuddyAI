@@ -52,8 +52,8 @@ devbuddy = "devbuddy.cli:main"
 [project.urls]
 Homepage = "https://devbuddy.ai"
 Documentation = "https://docs.devbuddy.ai"
-Repository = "https://github.com/devbuddy/devbuddy-ai"
-Issues = "https://github.com/devbuddy/devbuddy-ai/issues"
+Repository = "https://github.com/masuda-hikari/DevBuddyAI"
+Issues = "https://github.com/masuda-hikari/DevBuddyAI/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
