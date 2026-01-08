@@ -5,10 +5,14 @@ CodeReviewer - AIコードレビューエンジン
 """
 
 from pathlib import Path
+from typing import Any, Optional, TYPE_CHECKING
 
 from devbuddy.core.models import Issue, ReviewResult
 from devbuddy.llm.client import LLMClient
 from devbuddy.llm.prompts import PromptTemplates
+
+if TYPE_CHECKING:
+    from devbuddy.analyzers.python_analyzer import PythonAnalyzer
 
 
 class CodeReviewer:
@@ -16,11 +20,11 @@ class CodeReviewer:
 
     def __init__(self, client: LLMClient):
         self.client = client
-        self._analyzer = None
+        self._analyzer: Optional["PythonAnalyzer"] = None
         self.prompts = PromptTemplates()
 
     @property
-    def analyzer(self):
+    def analyzer(self) -> Any:
         """遅延インポートでPythonAnalyzerを取得"""
         if self._analyzer is None:
             from devbuddy.analyzers.python_analyzer import PythonAnalyzer
@@ -121,11 +125,11 @@ class CodeReviewer:
                     level_end = line.index("]")
                     level = line[1:level_end].lower()
 
-                    rest = line[level_end + 1 :].strip()
+                    rest = line[level_end + 1:].strip()
                     if rest.startswith("Line "):
                         line_end = rest.index(":")
                         line_num = int(rest[5:line_end])
-                        message = rest[line_end + 1 :].strip()
+                        message = rest[line_end + 1:].strip()
 
                         issues.append(
                             Issue(
@@ -154,7 +158,7 @@ class CodeReviewer:
 
     def _generate_summary(self, issues: list[Issue]) -> str:
         """サマリー生成"""
-        counts = {}
+        counts: dict[str, int] = {}
         for issue in issues:
             counts[issue.level] = counts.get(issue.level, 0) + 1
 

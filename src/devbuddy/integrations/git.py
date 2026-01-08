@@ -125,7 +125,8 @@ class GitOperations:
             args.append(commit)
 
         result = self._run_git(args)
-        files = [f.strip() for f in result.stdout.strip().split("\n") if f.strip()]
+        raw_files = result.stdout.strip().split("\n")
+        files = [f.strip() for f in raw_files if f.strip()]
         return files
 
     def get_file_diff(
@@ -141,12 +142,12 @@ class GitOperations:
         args.append(file_path)
 
         result = self._run_git(args)
-        return result.stdout
+        return str(result.stdout)
 
     def get_current_branch(self) -> str:
         """現在のブランチ名を取得"""
         result = self._run_git(["branch", "--show-current"])
-        return result.stdout.strip()
+        return str(result.stdout).strip()
 
     def get_commit_info(self, commit: str = "HEAD") -> CommitInfo:
         """コミット情報を取得"""
@@ -194,7 +195,7 @@ class GitOperations:
         result = self._run_git(["show", f"{commit}:{file_path}"])
 
         if result.returncode == 0:
-            return result.stdout
+            return str(result.stdout)
         return None
 
     def get_blame(self, file_path: str) -> list[dict]:
@@ -224,7 +225,8 @@ class GitOperations:
     def get_untracked_files(self) -> list[str]:
         """未追跡ファイルリストを取得"""
         result = self._run_git(["ls-files", "--others", "--exclude-standard"])
-        files = [f.strip() for f in result.stdout.strip().split("\n") if f.strip()]
+        raw_files = result.stdout.strip().split("\n")
+        files = [f.strip() for f in raw_files if f.strip()]
         return files
 
     def is_file_tracked(self, file_path: str) -> bool:
@@ -235,7 +237,8 @@ class GitOperations:
     def get_hooks_path(self) -> Path:
         """hooksディレクトリのパスを取得"""
         result = self._run_git(["rev-parse", "--git-path", "hooks"])
-        return self.repo_path / result.stdout.strip()
+        hooks_rel = str(result.stdout).strip()
+        return self.repo_path / hooks_rel
 
     def install_pre_commit_hook(self, script: str) -> bool:
         """pre-commitフックをインストール"""

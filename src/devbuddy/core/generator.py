@@ -66,7 +66,9 @@ class TestGenerator:
             with open(source_path, encoding="utf-8") as f:
                 source_code = f.read()
         except Exception as e:
-            return GenerationResult(success=False, error=f"Failed to read file: {e}")
+            return GenerationResult(
+                success=False, error=f"Failed to read file: {e}"
+            )
 
         # 関数情報を抽出
         functions = self._extract_functions(source_code)
@@ -119,7 +121,8 @@ class TestGenerator:
                 return result
 
             # テストを一時ファイルに書き出して実行
-            test_path = source_path.parent / f"_temp_test_{source_path.stem}.py"
+            temp_name = f"_temp_test_{source_path.stem}.py"
+            test_path = source_path.parent / temp_name
             try:
                 with open(test_path, "w", encoding="utf-8") as f:
                     f.write(result.test_code)
@@ -160,7 +163,7 @@ class TestGenerator:
 
     def _extract_functions(self, source_code: str) -> list[FunctionInfo]:
         """ソースコードから関数情報を抽出"""
-        functions = []
+        functions: list[FunctionInfo] = []
 
         try:
             tree = ast.parse(source_code)
@@ -188,7 +191,9 @@ class TestGenerator:
                 docstring = ast.get_docstring(node)
 
                 # ソースコード
-                source = "\n".join(lines[node.lineno - 1 : node.end_lineno])
+                start_line = node.lineno - 1
+                end_line = node.end_lineno
+                source = "\n".join(lines[start_line:end_line])
 
                 functions.append(
                     FunctionInfo(

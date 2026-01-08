@@ -81,7 +81,8 @@ class PythonAnalyzer:
                         level="warning",
                         line=node.lineno,
                         message="Bare except clause detected",
-                        suggestion="Specify exception type (e.g., except Exception:)",
+                        suggestion="Specify exception type "
+                        "(e.g., except Exception:)",
                     )
                 )
 
@@ -93,8 +94,10 @@ class PythonAnalyzer:
                             Issue(
                                 level="warning",
                                 line=node.lineno,
-                                message=f"Mutable default argument in function '{node.name}'",
-                                suggestion="Use None as default and initialize inside function",
+                                message=f"Mutable default argument "
+                                f"in function '{node.name}'",
+                                suggestion="Use None as default "
+                                "and initialize inside function",
                             )
                         )
 
@@ -105,7 +108,8 @@ class PythonAnalyzer:
                         level="info",
                         line=node.lineno,
                         message="Assert statement found",
-                        suggestion="Consider using proper error handling in production code",
+                        suggestion="Consider using proper error handling "
+                        "in production code",
                     )
                 )
 
@@ -116,27 +120,31 @@ class PythonAnalyzer:
                         level="style",
                         line=node.lineno,
                         message="Global statement used",
-                        suggestion="Consider using class attributes or function parameters instead",
+                        suggestion="Consider using class attributes "
+                        "or function parameters instead",
                     )
                 )
 
             # exec/eval検出
             if isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Name) and node.func.id in ("exec", "eval"):
-                    issues.append(
-                        Issue(
-                            level="bug",
-                            line=node.lineno,
-                            message=f"Potentially dangerous {node.func.id}() usage",
-                            suggestion="Avoid exec/eval with untrusted input",
+                if isinstance(node.func, ast.Name):
+                    if node.func.id in ("exec", "eval"):
+                        issues.append(
+                            Issue(
+                                level="bug",
+                                line=node.lineno,
+                                message=f"Potentially dangerous "
+                                f"{node.func.id}() usage",
+                                suggestion="Avoid exec/eval "
+                                "with untrusted input",
+                            )
                         )
-                    )
 
         return issues
 
     def _run_flake8(self, file_path: Path) -> list[Issue]:
         """flake8を実行"""
-        issues = []
+        issues: list[Issue] = []
 
         try:
             result = subprocess.run(
@@ -168,8 +176,9 @@ class PythonAnalyzer:
                     level = self._flake8_code_to_level(code)
 
                     # 無視リストチェック
-                    if self.config.ignore_codes and code in self.config.ignore_codes:
-                        continue
+                    if self.config.ignore_codes:
+                        if code in self.config.ignore_codes:
+                            continue
 
                     issues.append(
                         Issue(
@@ -185,7 +194,7 @@ class PythonAnalyzer:
 
     def _run_mypy(self, file_path: Path) -> list[Issue]:
         """mypyを実行"""
-        issues = []
+        issues: list[Issue] = []
 
         try:
             result = subprocess.run(

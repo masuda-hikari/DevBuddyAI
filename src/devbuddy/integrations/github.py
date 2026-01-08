@@ -6,7 +6,7 @@ PRへの自動コメント、Issue作成等を担当。
 
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -39,10 +39,10 @@ class GitHubIntegration:
                 "Set GITHUB_TOKEN environment variable."
             )
 
-        self._client = None
+        self._client: Any = None
 
     @property
-    def client(self):
+    def client(self) -> Any:
         """PyGitHubクライアントを遅延初期化"""
         if self._client is None:
             try:
