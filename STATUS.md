@@ -1,10 +1,10 @@
-﻿# DevBuddyAI - ステータス
+# DevBuddyAI - ステータス
 
 最終更新: 2026-01-10
 
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
-- 進捗: Phase 1完了、テストカバレッジ86%達成
+- 進捗: Phase 1完了、テストカバレッジ87%達成
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -13,18 +13,20 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - CLIエントリポイント (cli.py) - 動作確認済み
 - コアモジュール構造 (core/, llm/, analyzers/, integrations/)
 - Python静的解析器 (python_analyzer.py)
+- **JavaScript/TypeScript静的解析器 (js_analyzer.py) - NEW**
 - コードレビューエンジン (reviewer.py)
 - テスト生成エンジン (generator.py → CodeTestGenerator)
 - LLMクライアント基盤 (client.py, prompts.py)
 - GitHub/Git連携モジュール
 - PyPI公開用GitHub Actionワークフロー
 - PyPI公開手順書 (docs/PYPI_PUBLISH_GUIDE.md)
+- **ランディングページ (docs/index.html) - NEW**
 
 ## コード品質
 - flake8: 0 errors
-- mypy: 0 errors (15 source files)
-- テスト: **173件**全合格（前回123件から+50件）
-- テストカバレッジ: **86%**（前回68%から+18%向上）
+- mypy: 0 errors (16 source files)
+- テスト: **215件**全合格（前回173件から+42件）
+- テストカバレッジ: **87%**（前回86%から+1%向上）
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -42,14 +44,15 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - `devbuddy --version`
 
 ## 最近の変更
-- 2026-01-10: テストカバレッジ86%に向上（123件→173件）
-  - test_cli.py: 16テスト追加（review/testgen/fix全パス）
-  - test_llm_client.py: 14テスト追加（Claude/OpenAI complete）
-  - test_git.py: 11テスト追加（diff/blame/hook）
-  - test_generator.py: 13テスト追加（extract/clean/error）
-- 2026-01-10: 前回セッション - テストカバレッジ68%
-- 2026-01-09: pyproject.toml Repository URL修正
-- 2026-01-09: PyPI公開手順書作成
+- 2026-01-10: ランディングページ作成（docs/index.html）
+  - モダンなデザイン、レスポンシブ対応
+  - 機能紹介、料金プラン、セキュリティ説明
+- 2026-01-10: JavaScript/TypeScript Analyzer実装
+  - パターンベース解析（console.log, eval, var, ==等）
+  - ESLint/tsc連携
+  - 関数/クラス/エクスポート/インポート解析
+  - テスト42件追加
+- 2026-01-10: テストカバレッジ87%に向上（173件→215件）
 
 ## 収益化リンク
 SaaS/API課金モデル → Pro: $19/月、Team: $99/月
