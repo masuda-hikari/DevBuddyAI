@@ -2,11 +2,13 @@
 CodeTestGenerator - AIテスト生成エンジン
 
 関数/クラスからユニットテストを自動生成。
+自己検証ループにより、生成テストの品質を保証。
 """
 
 import ast
+import re
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
@@ -28,6 +30,19 @@ class FunctionInfo:
 
 
 @dataclass
+class TestVerificationReport:
+    """テスト検証レポート"""
+
+    passed: int = 0
+    failed: int = 0
+    errors: int = 0
+    skipped: int = 0
+    coverage_percent: Optional[float] = None
+    failed_tests: list[str] = field(default_factory=list)
+    error_messages: list[str] = field(default_factory=list)
+
+
+@dataclass
 class GenerationResult:
     """テスト生成結果"""
 
@@ -36,6 +51,8 @@ class GenerationResult:
     error: Optional[str] = None
     test_count: int = 0
     verified: bool = False
+    attempts: int = 1
+    verification_report: Optional[TestVerificationReport] = None
 
 
 class CodeTestGenerator:
@@ -111,13 +128,26 @@ class CodeTestGenerator:
         source_path: Path,
         function_name: Optional[str] = None,
         framework: str = "pytest",
+        measure_coverage: bool = False,
     ) -> GenerationResult:
         """テストを生成し、実行して検証
 
         失敗した場合は修正を試行（自己検証ループ）
+
+        Args:
+            source_path: ソースファイルパス
+            function_name: 対象関数名（Noneなら全関数）
+            framework: テストフレームワーク (pytest/unittest)
+            measure_coverage: カバレッジを測定するか
+
+        Returns:
+            GenerationResult: 生成・検証結果
         """
+        result = GenerationResult(success=False)
+
         for attempt in range(self.max_retry):
             result = self.generate_tests(source_path, function_name, framework)
+            result.attempts = attempt + 1
 
             if not result.success:
                 return result
@@ -129,13 +159,24 @@ class CodeTestGenerator:
                 with open(test_path, "w", encoding="utf-8") as f:
                     f.write(result.test_code)
 
-                # テスト実行
+                # テスト実行コマンドを構築
+                cmd = ["pytest", str(test_path), "-v", "--tb=short"]
+                if measure_coverage:
+                    cmd.extend([
+                        f"--cov={source_path.parent}",
+                        "--cov-report=term-missing"
+                    ])
+
                 proc = subprocess.run(
-                    ["pytest", str(test_path), "-v", "--tb=short"],
+                    cmd,
                     capture_output=True,
                     text=True,
                     timeout=60,
                 )
+
+                # 検証レポートを解析
+                report = self._parse_test_output(proc.stdout + proc.stderr)
+                result.verification_report = report
 
                 if proc.returncode == 0:
                     result.verified = True
@@ -143,9 +184,16 @@ class CodeTestGenerator:
 
                 # 失敗した場合、AIに修正を依頼
                 if attempt < self.max_retry - 1:
+                    # より詳細なエラー情報を提供
+                    error_context = self._build_error_context(
+                        test_code=result.test_code,
+                        output=proc.stdout + proc.stderr,
+                        report=report,
+                        attempt=attempt + 1,
+                    )
                     fix_prompt = self.prompts.fix_failing_tests(
                         test_code=result.test_code,
-                        error_output=proc.stdout + proc.stderr,
+                        error_output=error_context,
                     )
                     result.test_code = self.client.complete(fix_prompt)
                     result.test_code = self._clean_test_code(result.test_code)
@@ -154,14 +202,96 @@ class CodeTestGenerator:
                 return GenerationResult(
                     success=False,
                     error="Test execution timed out",
+                    attempts=attempt + 1,
                 )
             except Exception as e:
-                return GenerationResult(success=False, error=str(e))
+                return GenerationResult(
+                    success=False,
+                    error=str(e),
+                    attempts=attempt + 1,
+                )
             finally:
                 if test_path.exists():
                     test_path.unlink()
 
         return result
+
+    def _parse_test_output(self, output: str) -> TestVerificationReport:
+        """pytestの出力を解析してレポートを生成"""
+        report = TestVerificationReport()
+
+        # テスト結果のサマリーを解析
+        # 例: "5 passed, 2 failed, 1 error in 0.53s"
+        summary_match = re.search(
+            r"(\d+) passed(?:.*?(\d+) failed)?(?:.*?(\d+) error)?",
+            output,
+            re.IGNORECASE
+        )
+        if summary_match:
+            report.passed = int(summary_match.group(1) or 0)
+            report.failed = int(summary_match.group(2) or 0)
+            report.errors = int(summary_match.group(3) or 0)
+
+        # skipped の解析
+        skipped_match = re.search(r"(\d+) skipped", output, re.IGNORECASE)
+        if skipped_match:
+            report.skipped = int(skipped_match.group(1))
+
+        # カバレッジの解析
+        # 例: "TOTAL                   100     20    80%"
+        coverage_match = re.search(r"TOTAL\s+\d+\s+\d+\s+(\d+)%", output)
+        if coverage_match:
+            report.coverage_percent = float(coverage_match.group(1))
+
+        # 失敗したテスト名を抽出
+        # 例: "FAILED test_example.py::test_func - AssertionError"
+        failed_matches = re.findall(
+            r"FAILED\s+[\w.]+::(\w+)", output
+        )
+        report.failed_tests = failed_matches
+
+        # エラーメッセージを抽出
+        error_blocks = re.findall(
+            r"(E\s+.+?)(?=\n[^\s]|\Z)",
+            output,
+            re.MULTILINE
+        )
+        report.error_messages = [e.strip() for e in error_blocks[:5]]
+
+        return report
+
+    def _build_error_context(
+        self,
+        test_code: str,
+        output: str,
+        report: TestVerificationReport,
+        attempt: int,
+    ) -> str:
+        """AIへの修正依頼用のエラーコンテキストを構築"""
+        context_parts = [
+            f"=== 自己検証ループ: 試行 {attempt}/{self.max_retry} ===",
+            "",
+            f"失敗テスト数: {report.failed}",
+            f"エラー数: {report.errors}",
+            "",
+        ]
+
+        if report.failed_tests:
+            context_parts.append("失敗したテスト:")
+            for test_name in report.failed_tests:
+                context_parts.append(f"  - {test_name}")
+            context_parts.append("")
+
+        if report.error_messages:
+            context_parts.append("エラーメッセージ:")
+            for msg in report.error_messages:
+                context_parts.append(f"  {msg}")
+            context_parts.append("")
+
+        context_parts.append("=== 完全な出力 ===")
+        context_parts.append(output)
+
+        return "\n".join(context_parts)
 
     def _extract_functions(self, source_code: str) -> list[FunctionInfo]:
         """ソースコードから関数情報を抽出"""
