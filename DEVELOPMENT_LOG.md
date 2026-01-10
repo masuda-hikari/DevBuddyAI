@@ -5,6 +5,27 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 
 ---
 
+## 2026-01-10
+
+### 作業内容
+- TestGenerator → CodeTestGeneratorにリネーム
+  - pytest警告「cannot collect test class 'TestGenerator'」解消
+  - `__test__ = False`属性追加で将来的な誤検出も防止
+- 関連ファイル更新（cli.py, __init__.py, tests, docs）
+- コード品質確認（flake8/mypy/pytest 全合格）
+- テストカバレッジ測定（43%）
+
+### 技術課題
+- PyPI Trusted Publisher設定待ち（人間の作業）
+- リポジトリがPRIVATE状態
+
+### 次回作業
+1. リポジトリ公開設定（OSSの場合）
+2. PyPI Trusted Publisher設定
+3. GitHubリリースv0.1.0作成
+
+---
+
 ## 2026-01-09
 
 ### 作業内容

@@ -42,15 +42,15 @@ for issue in result.issues:
 | message | str | メッセージ |
 | suggestion | str | 改善提案 |
 
-### TestGenerator
+### CodeTestGenerator
 
 テスト生成エンジン。
 ```python
-from devbuddy.core.generator import TestGenerator
+from devbuddy.core.generator import CodeTestGenerator
 from devbuddy.llm.client import LLMClient
 
 client = LLMClient(api_key="your_key")
-generator = TestGenerator(client=client)
+generator = CodeTestGenerator(client=client)
 
 # テスト生成
 result = generator.generate_tests(
