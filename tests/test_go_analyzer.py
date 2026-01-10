@@ -1,7 +1,5 @@
 """Go Analyzerのテスト"""
 
-import pytest
-
 from devbuddy.analyzers.go_analyzer import GoAnalyzer, GoAnalysisConfig
 
 
