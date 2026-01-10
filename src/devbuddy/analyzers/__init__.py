@@ -2,5 +2,6 @@
 
 from devbuddy.analyzers.js_analyzer import JavaScriptAnalyzer
 from devbuddy.analyzers.python_analyzer import PythonAnalyzer
+from devbuddy.analyzers.rust_analyzer import RustAnalyzer
 
-__all__ = ["PythonAnalyzer", "JavaScriptAnalyzer"]
+__all__ = ["PythonAnalyzer", "JavaScriptAnalyzer", "RustAnalyzer"]
