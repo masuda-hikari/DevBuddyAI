@@ -16,7 +16,7 @@ import click
 
 from devbuddy import __version__
 from devbuddy.core.reviewer import CodeReviewer
-from devbuddy.core.generator import TestGenerator
+from devbuddy.core.generator import CodeTestGenerator
 from devbuddy.core.fixer import BugFixer
 from devbuddy.llm.client import LLMClient
 
@@ -166,7 +166,7 @@ def testgen(
     """
     api_key = get_api_key()
     client = LLMClient(api_key=api_key)
-    generator = TestGenerator(client=client)
+    generator = CodeTestGenerator(client=client)
 
     click.echo(f"Generating tests for: {path}")
     if function:

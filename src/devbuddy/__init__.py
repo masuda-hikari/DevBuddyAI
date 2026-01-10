@@ -8,12 +8,12 @@ __version__ = "0.1.0"
 __author__ = "DevBuddyAI Team"
 
 from devbuddy.core.reviewer import CodeReviewer
-from devbuddy.core.generator import TestGenerator
+from devbuddy.core.generator import CodeTestGenerator
 from devbuddy.core.fixer import BugFixer
 
 __all__ = [
     "CodeReviewer",
-    "TestGenerator",
+    "CodeTestGenerator",
     "BugFixer",
     "__version__",
 ]

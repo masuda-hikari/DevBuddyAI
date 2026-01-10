@@ -1,16 +1,16 @@
 """
-TestGeneratorのテスト
+CodeTestGeneratorのテスト
 """
 
 import pytest
 from pathlib import Path
 
-from devbuddy.core.generator import TestGenerator, FunctionInfo, GenerationResult
+from devbuddy.core.generator import CodeTestGenerator, FunctionInfo, GenerationResult
 from devbuddy.llm.client import MockLLMClient
 
 
-class TestTestGenerator:
-    """TestGeneratorテストクラス"""
+class TestCodeTestGenerator:
+    """CodeTestGeneratorテストクラス"""
 
     @pytest.fixture
     def generator(self):
@@ -25,7 +25,7 @@ def test_add_negative():
     assert add(-1, -1) == -2
 """
         })
-        return TestGenerator(client=client)
+        return CodeTestGenerator(client=client)
 
     def test_generate_tests_success(self, generator, temp_python_file):
         """テスト生成成功"""

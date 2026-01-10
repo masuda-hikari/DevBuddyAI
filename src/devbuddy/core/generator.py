@@ -1,5 +1,5 @@
 """
-TestGenerator - AIテスト生成エンジン
+CodeTestGenerator - AIテスト生成エンジン
 
 関数/クラスからユニットテストを自動生成。
 """
@@ -38,8 +38,10 @@ class GenerationResult:
     verified: bool = False
 
 
-class TestGenerator:
+class CodeTestGenerator:
     """AIテスト生成エンジン"""
+
+    __test__ = False  # pytestがテストクラスと誤認識しないようにする
 
     def __init__(self, client: LLMClient):
         self.client = client
