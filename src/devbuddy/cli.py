@@ -18,6 +18,7 @@ from devbuddy import __version__
 from devbuddy.core.reviewer import CodeReviewer
 from devbuddy.core.generator import CodeTestGenerator
 from devbuddy.core.fixer import BugFixer
+from devbuddy.core.formatters import get_formatter
 from devbuddy.llm.client import LLMClient
 
 
@@ -40,6 +41,30 @@ def get_api_key() -> str:
     return api_key
 
 
+def get_config_value(key: str, default: str = "") -> str:
+    """設定ファイルから値を取得"""
+    config_path = Path(".devbuddy.yaml")
+    if not config_path.exists():
+        return default
+
+    try:
+        import yaml  # type: ignore[import-untyped]
+        with open(config_path, encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+    except Exception:
+        return default
+
+    # ドット区切りのキーを解決
+    keys = key.split(".")
+    value = cfg
+    for k in keys:
+        if isinstance(value, dict) and k in value:
+            value = value[k]
+        else:
+            return default
+    return str(value) if value is not None else default
+
+
 @click.group()
 @click.version_option(version=__version__, prog_name="devbuddy")
 def cli() -> None:
@@ -56,22 +81,43 @@ def cli() -> None:
 @click.option(
     "--severity",
     type=click.Choice(["low", "medium", "high"]),
-    default="medium",
+    default=None,
+    help="検出レベル（設定ファイルでデフォルト指定可）",
 )
 @click.option("--output", "-o", type=click.Path(), help="結果をファイルに出力")
+@click.option(
+    "--format", "-f", "output_format",
+    type=click.Choice(["text", "json", "markdown"]),
+    default=None,
+    help="出力形式（設定ファイルでデフォルト指定可）",
+)
 def review(
-    path: str, diff: bool, severity: str, output: Optional[str]
+    path: str,
+    diff: bool,
+    severity: Optional[str],
+    output: Optional[str],
+    output_format: Optional[str],
 ) -> None:
     """コードをレビューしてバグ、スタイル問題、改善点を指摘
 
     PATH: レビュー対象のファイルまたはディレクトリ
     """
+    # 設定ファイルからデフォルト値を取得
+    if severity is None:
+        severity = get_config_value("review.severity", "medium")
+    if output_format is None:
+        output_format = get_config_value("output.format", "text")
+
     api_key = get_api_key()
     client = LLMClient(api_key=api_key)
     reviewer = CodeReviewer(client=client)
 
-    click.echo(f"Reviewing: {path}")
-    click.echo(f"Severity level: {severity}")
+    # JSON出力時は進捗表示を抑制
+    quiet = output_format == "json"
+
+    if not quiet:
+        click.echo(f"Reviewing: {path}")
+        click.echo(f"Severity level: {severity}")
 
     target_path = Path(path)
 
@@ -81,106 +127,149 @@ def review(
         files = list(target_path.rglob("*.py"))
 
     if not files:
-        click.echo(click.style("No Python files found", fg="yellow"))
+        if output_format == "json":
+            import json
+            click.echo(json.dumps({
+                "tool": "DevBuddyAI",
+                "type": "code_review",
+                "error": "No Python files found",
+                "results": [],
+            }))
+        else:
+            click.echo(click.style("No Python files found", fg="yellow"))
         return
 
     all_results = []
-    with click.progressbar(files, label="Reviewing files") as bar:
-        for file_path in bar:
+    if quiet:
+        for file_path in files:
             result = reviewer.review_file(file_path, severity=severity)
             all_results.append(result)
+    else:
+        with click.progressbar(files, label="Reviewing files") as bar:
+            for file_path in bar:
+                result = reviewer.review_file(file_path, severity=severity)
+                all_results.append(result)
 
-    # 結果表示
-    click.echo("\n" + "=" * 50)
-    click.echo(
-        click.style("DevBuddyAI Code Review Results", fg="cyan", bold=True)
-    )
-    click.echo("=" * 50 + "\n")
+    # フォーマッターで出力生成
+    formatter = get_formatter(output_format)
+    formatted_output = formatter.format_review(all_results)
 
-    total_issues = {"bug": 0, "warning": 0, "style": 0, "info": 0}
+    # 結果表示（textのみカラー出力）
+    if output_format == "text":
+        click.echo("\n" + "=" * 50)
+        click.echo(
+            click.style("DevBuddyAI Code Review Results", fg="cyan", bold=True)
+        )
+        click.echo("=" * 50 + "\n")
 
-    for result in all_results:
-        if result.issues:
-            click.echo(
-                click.style(f"\n{result.file_path}", fg="white", bold=True)
-            )
-            for issue in result.issues:
-                color = {
-                    "bug": "red",
-                    "warning": "yellow",
-                    "style": "blue",
-                    "info": "green",
-                }.get(issue.level, "white")
+        total_issues = {"bug": 0, "warning": 0, "style": 0, "info": 0}
 
+        for result in all_results:
+            if result.issues:
                 click.echo(
-                    f"  [{click.style(issue.level.upper(), fg=color)}] "
-                    f"Line {issue.line}: {issue.message}"
+                    click.style(f"\n{result.file_path}", fg="white", bold=True)
                 )
-                if issue.suggestion:
-                    click.echo(f"    Suggestion: {issue.suggestion}")
+                for issue in result.issues:
+                    color = {
+                        "bug": "red",
+                        "warning": "yellow",
+                        "style": "blue",
+                        "info": "green",
+                    }.get(issue.level, "white")
 
-                count = total_issues.get(issue.level, 0) + 1
-                total_issues[issue.level] = count
+                    click.echo(
+                        f"  [{click.style(issue.level.upper(), fg=color)}] "
+                        f"Line {issue.line}: {issue.message}"
+                    )
+                    if issue.suggestion:
+                        click.echo(f"    Suggestion: {issue.suggestion}")
 
-    # サマリー
-    click.echo("\n" + "-" * 50)
-    bugs = total_issues["bug"]
-    warnings = total_issues["warning"]
-    styles = total_issues["style"]
-    click.echo(
-        f"Summary: {bugs} bugs, {warnings} warnings, {styles} style issues"
-    )
+                    count = total_issues.get(issue.level, 0) + 1
+                    total_issues[issue.level] = count
+
+        # サマリー
+        click.echo("\n" + "-" * 50)
+        bugs = total_issues["bug"]
+        warnings = total_issues["warning"]
+        styles = total_issues["style"]
+        click.echo(
+            f"Summary: {bugs} bugs, {warnings} warnings, {styles} style issues"
+        )
+    else:
+        # JSON/Markdown出力
+        click.echo(formatted_output)
 
     if output:
         # 結果をファイルに保存
         with open(output, "w", encoding="utf-8") as f:
-            for result in all_results:
-                f.write(f"\n{result.file_path}\n")
-                for issue in result.issues:
-                    line = issue.line
-                    msg = issue.message
-                    f.write(f"  [{issue.level}] Line {line}: {msg}\n")
-        click.echo(f"\nResults saved to: {output}")
+            f.write(formatted_output)
+        if not quiet:
+            click.echo(f"\nResults saved to: {output}")
 
 
 @cli.command()
 @click.argument("path", type=click.Path(exists=True))
-@click.option("--function", "-f", help="特定の関数のみテスト生成")
+@click.option("--function", "-fn", "function", help="特定の関数のみテスト生成")
 @click.option("--output", "-o", type=click.Path(), help="出力先ファイル")
 @click.option(
     "--framework",
     type=click.Choice(["pytest", "unittest"]),
-    default="pytest",
+    default=None,
+    help="テストフレームワーク（設定ファイルでデフォルト指定可）",
 )
 @click.option("--run", is_flag=True, help="生成後にテストを実行")
+@click.option(
+    "--format", "-f", "output_format",
+    type=click.Choice(["text", "json", "markdown"]),
+    default=None,
+    help="出力形式（設定ファイルでデフォルト指定可）",
+)
 def testgen(
     path: str,
     function: Optional[str],
     output: Optional[str],
-    framework: str,
+    framework: Optional[str],
     run: bool,
+    output_format: Optional[str],
 ) -> None:
     """関数/クラスのユニットテストを自動生成
 
     PATH: テスト対象のソースファイル
     """
+    # 設定ファイルからデフォルト値を取得
+    if framework is None:
+        framework = get_config_value("testgen.framework", "pytest")
+    if output_format is None:
+        output_format = get_config_value("output.format", "text")
+
     api_key = get_api_key()
     client = LLMClient(api_key=api_key)
     generator = CodeTestGenerator(client=client)
 
-    click.echo(f"Generating tests for: {path}")
-    if function:
-        click.echo(f"Target function: {function}")
+    quiet = output_format == "json"
+
+    if not quiet:
+        click.echo(f"Generating tests for: {path}")
+        if function:
+            click.echo(f"Target function: {function}")
 
     source_path = Path(path)
     result = generator.generate_tests(
         source_path, function_name=function, framework=framework
     )
 
+    # フォーマッターで出力生成
+    formatter = get_formatter(output_format)
+
     if result.success:
-        click.echo(click.style("\nGenerated Tests:", fg="green", bold=True))
-        click.echo("-" * 40)
-        click.echo(result.test_code)
+        if output_format == "text":
+            gen_msg = click.style("\nGenerated Tests:", fg="green", bold=True)
+            click.echo(gen_msg)
+            click.echo("-" * 40)
+            click.echo(result.test_code)
+        else:
+            formatted_output = formatter.format_testgen(result)
+            click.echo(formatted_output)
 
         # 出力先決定
         if output:
@@ -192,10 +281,12 @@ def testgen(
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(result.test_code)
-        click.echo(f"\nTest file saved to: {output_path}")
+        if not quiet:
+            click.echo(f"\nTest file saved to: {output_path}")
 
         if run:
-            click.echo("\nRunning generated tests...")
+            if not quiet:
+                click.echo("\nRunning generated tests...")
             import subprocess
 
             proc = subprocess.run(
@@ -203,51 +294,95 @@ def testgen(
                 capture_output=True,
                 text=True,
             )
-            click.echo(proc.stdout)
+            if not quiet:
+                click.echo(proc.stdout)
             if proc.returncode != 0:
-                click.echo(click.style("Some tests failed!", fg="red"))
-                click.echo(proc.stderr)
+                if not quiet:
+                    click.echo(click.style("Some tests failed!", fg="red"))
+                    click.echo(proc.stderr)
             else:
-                click.echo(click.style("All tests passed!", fg="green"))
+                if not quiet:
+                    click.echo(click.style("All tests passed!", fg="green"))
     else:
-        click.echo(click.style(f"Error: {result.error}", fg="red"))
+        if output_format == "text":
+            click.echo(click.style(f"Error: {result.error}", fg="red"))
+        else:
+            formatted_output = formatter.format_testgen(result)
+            click.echo(formatted_output)
 
 
 @cli.command()
 @click.argument("test_path", type=click.Path(exists=True))
 @click.option("--source", "-s", type=click.Path(exists=True), help="ソースファイル")
 @click.option("--apply", is_flag=True, help="修正を自動適用")
-def fix(test_path: str, source: Optional[str], apply: bool) -> None:
+@click.option(
+    "--format", "-f", "output_format",
+    type=click.Choice(["text", "json", "markdown"]),
+    default=None,
+    help="出力形式（設定ファイルでデフォルト指定可）",
+)
+@click.option("--output", "-o", type=click.Path(), help="結果をファイルに出力")
+def fix(
+    test_path: str,
+    source: Optional[str],
+    apply: bool,
+    output_format: Optional[str],
+    output: Optional[str],
+) -> None:
     """失敗テストやバグに対する修正を提案
 
     TEST_PATH: 失敗しているテストファイル
     """
+    # 設定ファイルからデフォルト値を取得
+    if output_format is None:
+        output_format = get_config_value("output.format", "text")
+
     api_key = get_api_key()
     client = LLMClient(api_key=api_key)
     fixer = BugFixer(client=client)
 
-    click.echo(f"Analyzing failing tests: {test_path}")
+    quiet = output_format == "json"
+
+    if not quiet:
+        click.echo(f"Analyzing failing tests: {test_path}")
 
     source_p = Path(source) if source else None
     result = fixer.suggest_fix(Path(test_path), source_path=source_p)
 
-    if result.suggestions:
-        click.echo(click.style("\nSuggested Fixes:", fg="cyan", bold=True))
-        for i, suggestion in enumerate(result.suggestions, 1):
-            click.echo(f"\n{i}. {suggestion.description}")
-            click.echo(f"   File: {suggestion.file_path}:{suggestion.line}")
-            click.echo("   Change:")
-            click.echo(click.style(f"   - {suggestion.original}", fg="red"))
-            repl = suggestion.replacement
-            click.echo(click.style(f"   + {repl}", fg="green"))
+    # フォーマッターで出力生成
+    formatter = get_formatter(output_format)
+    formatted_output = formatter.format_fix(result)
 
-        if apply:
-            click.echo("\nApplying fixes...")
-            for suggestion in result.suggestions:
-                fixer.apply_fix(suggestion)
-            click.echo(click.style("Fixes applied!", fg="green"))
+    if output_format == "text":
+        if result.suggestions:
+            fix_msg = click.style("\nSuggested Fixes:", fg="cyan", bold=True)
+            click.echo(fix_msg)
+            for i, suggestion in enumerate(result.suggestions, 1):
+                click.echo(f"\n{i}. {suggestion.description}")
+                file_loc = f"{suggestion.file_path}:{suggestion.line}"
+                click.echo(f"   File: {file_loc}")
+                click.echo("   Change:")
+                orig = click.style(f"   - {suggestion.original}", fg="red")
+                click.echo(orig)
+                repl = suggestion.replacement
+                click.echo(click.style(f"   + {repl}", fg="green"))
+
+            if apply:
+                click.echo("\nApplying fixes...")
+                for suggestion in result.suggestions:
+                    fixer.apply_fix(suggestion)
+                click.echo(click.style("Fixes applied!", fg="green"))
+        else:
+            click.echo(click.style("No fixes suggested", fg="yellow"))
     else:
-        click.echo(click.style("No fixes suggested", fg="yellow"))
+        # JSON/Markdown出力
+        click.echo(formatted_output)
+
+    if output:
+        with open(output, "w", encoding="utf-8") as f:
+            f.write(formatted_output)
+        if not quiet:
+            click.echo(f"\nResults saved to: {output}")
 
 
 def load_config(config_path: Path) -> dict:
@@ -274,7 +409,9 @@ def save_config(config_path: Path, config: dict) -> bool:
     try:
         import yaml  # type: ignore[import-untyped]
         with open(config_path, "w", encoding="utf-8") as f:
-            yaml.safe_dump(config, f, default_flow_style=False, allow_unicode=True)
+            yaml.safe_dump(
+                config, f, default_flow_style=False, allow_unicode=True
+            )
         return True
     except ImportError:
         click.echo(
@@ -407,11 +544,9 @@ output:
 """
         with open(config_path, "w", encoding="utf-8") as f:
             f.write(default_config)
-        click.echo(
-            click.style("✓ ", fg="green") +
-            f"Config file created: {config_path}"
-        )
-        click.echo("  Edit this file or use 'devbuddy config --set' to configure")
+        check_mark = click.style("✓ ", fg="green")
+        click.echo(check_mark + f"Config file created: {config_path}")
+        click.echo("  Edit or use 'devbuddy config --set' to configure")
 
     elif list_keys:
         available_keys = [
@@ -431,15 +566,19 @@ output:
             ("output.color", "色付き出力（true/false）"),
             ("output.verbose", "詳細出力（true/false）"),
         ]
-        click.echo(click.style("Available configuration keys:", fg="cyan", bold=True))
+        header = click.style(
+            "Available configuration keys:", fg="cyan", bold=True
+        )
+        click.echo(header)
         click.echo()
         for key, description in available_keys:
-            click.echo(f"  {click.style(key, fg='green'):40} {description}")
+            key_styled = click.style(key, fg='green')
+            click.echo(f"  {key_styled:40} {description}")
 
     elif get_key:
         cfg = load_config(config_path)
         if not cfg:
-            click.echo("No config file found. Run 'devbuddy config --init' first.")
+            click.echo("No config file. Run 'devbuddy config --init' first.")
             return
         value = get_nested_value(cfg, get_key)
         if value is not None:
@@ -452,15 +591,13 @@ output:
 
     elif set_value:
         if "=" not in set_value:
-            click.echo(
-                click.style("Error: ", fg="red") +
-                "Use format: --set key=value (e.g., --set review.severity=high)"
-            )
+            err_msg = click.style("Error: ", fg="red")
+            click.echo(err_msg + "Use format: --set key=value")
             return
         key, value = set_value.split("=", 1)
         cfg = load_config(config_path)
         if not cfg:
-            click.echo("No config file found. Creating default config first...")
+            click.echo("No config file found. Creating default first...")
             # 初期化してから読み込み
             ctx = click.Context(config)
             ctx.invoke(config, init=True)
@@ -475,9 +612,8 @@ output:
 
     elif show:
         if config_path.exists():
-            click.echo(
-                click.style(f"Config file: {config_path}", fg="cyan", bold=True)
-            )
+            cfg_header = click.style(f"Config file: {config_path}", fg="cyan")
+            click.echo(cfg_header)
             click.echo()
             with open(config_path, encoding="utf-8") as f:
                 click.echo(f.read())
@@ -487,7 +623,8 @@ output:
                 "Run 'devbuddy config --init' to create one."
             )
     else:
-        click.echo(click.style("DevBuddyAI Configuration", fg="cyan", bold=True))
+        title = click.style("DevBuddyAI Configuration", fg="cyan", bold=True)
+        click.echo(title)
         click.echo()
         click.echo("Usage:")
         click.echo("  devbuddy config --init          # Create default config")

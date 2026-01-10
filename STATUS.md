@@ -1,10 +1,10 @@
 ﻿﻿﻿﻿# DevBuddyAI - ステータス
 
-最終更新: 2026-01-10
+最終更新: 2026-01-11
 
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
-- 進捗: Phase 1完了、法務対応完了、全Analyzer実装完了、CLI強化完了
+- 進捗: Phase 1完了、全機能実装完了
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -20,23 +20,26 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - テスト生成エンジン (generator.py → CodeTestGenerator)
 - LLMクライアント基盤 (client.py, prompts.py)
 - GitHub/Git連携モジュール
+- **出力フォーマッター (formatters.py)** - NEW
+  - Text / JSON / Markdown 形式対応
+  - 全コマンド (review/testgen/fix) に統合
+- **設定ファイル統合** - NEW
+  - .devbuddy.yaml からデフォルト値を自動読込
+  - CLI引数 > 設定ファイル > デフォルト値の優先順位
 - PyPI公開用GitHub Actionワークフロー
-- **GitHub Pagesデプロイワークフロー (pages.yml)**
+- GitHub Pagesデプロイワークフロー (pages.yml)
 - PyPI公開手順書 (docs/PYPI_PUBLISH_GUIDE.md)
 - ランディングページ (docs/index.html)
 - 法務ページ完備
   - プライバシーポリシー (docs/privacy.html)
   - 利用規約 (docs/terms.html)
   - 特定商取引法に基づく表記 (docs/legal.html)
-- **CLIコンフィグ管理機能強化**
-  - `--get` / `--set` オプション
-  - `--list-keys` オプション
-  - ドット区切りネスト設定対応
+- CLIコンフィグ管理機能強化
 
 ## コード品質
 - flake8: 0 errors
-- mypy: 0 errors (18 source files)
-- テスト: **301件**全合格
+- mypy: 0 errors (19 source files)
+- テスト: **319件**全合格 (+18件)
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -54,18 +57,15 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - ワークフロー: pages.yml
 
 ## 最近の変更
+- 2026-01-11: CLI出力形式対応（JSON/Markdown）
+  - 新規: src/devbuddy/core/formatters.py
+  - review/testgen/fix コマンドに --format オプション追加
+  - テスト18件追加（test_formatters.py）
+- 2026-01-11: 設定ファイル読み込み統合
+  - .devbuddy.yaml からデフォルト値を自動読込
+  - CLI引数が未指定時に設定ファイルの値を使用
 - 2026-01-10: CLI configコマンド強化
-  - --get / --set オプション追加（ドット区切り対応）
-  - --list-keys オプション追加（利用可能キー一覧表示）
-  - --path オプション追加（カスタム設定ファイルパス）
-  - 詳細な設定ファイルテンプレート生成
-  - テスト9件追加（301件に拡大）
 - 2026-01-10: GitHub Pagesワークフロー作成
-  - docs/配下の自動デプロイ設定
-- 2026-01-10: コード品質改善
-  - flake8エラー全修正
-  - test_llm_client.py行長超過修正
-  - test_js_analyzer.py行長超過修正
 
 ## 収益化リンク
 SaaS/API課金モデル → Pro: $19/月、Team: $99/月
