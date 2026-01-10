@@ -4,8 +4,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from devbuddy.analyzers.js_analyzer import JavaScriptAnalyzer, JSAnalysisConfig
 
 
@@ -332,7 +330,11 @@ class TestESLintIntegration:
             file_path = Path(f.name)
 
         mock_result = MagicMock()
-        mock_result.stdout = """[{"messages": [{"severity": 2, "line": 1, "ruleId": "no-unused-vars", "message": "x is not used"}]}]"""
+        eslint_output = (
+            '[{"messages": [{"severity": 2, "line": 1, '
+            '"ruleId": "no-unused-vars", "message": "x is not used"}]}]'
+        )
+        mock_result.stdout = eslint_output
 
         with patch("subprocess.run", return_value=mock_result):
             issues = analyzer._run_eslint(file_path)
@@ -377,7 +379,11 @@ class TestTSCIntegration:
             file_path = Path(f.name)
 
         mock_result = MagicMock()
-        mock_result.stdout = f"{file_path}(1,7): error TS2322: Type 'string' is not assignable to type 'number'."
+        tsc_error = (
+            f"{file_path}(1,7): error TS2322: "
+            "Type 'string' is not assignable to type 'number'."
+        )
+        mock_result.stdout = tsc_error
 
         with patch("subprocess.run", return_value=mock_result):
             issues = analyzer._run_tsc(file_path)

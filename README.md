@@ -111,8 +111,8 @@ ignore_patterns:
 | Python | Full | Full | flake8, mypy, pylint |
 | JavaScript | Full | Partial | ESLint |
 | TypeScript | Full | Partial | ESLint, tsc |
-| Rust | Coming Soon | Coming Soon | clippy |
-| Go | Coming Soon | Coming Soon | go vet |
+| Rust | Full | Partial | clippy, cargo check |
+| Go | Full | Partial | go vet, staticcheck, golangci-lint |
 
 ## Pricing
 

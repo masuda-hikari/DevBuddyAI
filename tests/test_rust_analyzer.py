@@ -1,7 +1,5 @@
 """Rust Analyzerのテスト"""
 
-import pytest
-
 from devbuddy.analyzers.rust_analyzer import RustAnalyzer, RustAnalysisConfig
 
 
