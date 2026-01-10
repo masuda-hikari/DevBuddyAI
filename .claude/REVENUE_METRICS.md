@@ -39,10 +39,11 @@
 - [x] GitHub Action対応（devbuddy-action.yml強化）
 - [ ] PR自動コメント機能（PyPI公開後テスト）
 - [x] 設定ファイル対応の強化（configコマンド）
-- [ ] GitHub Marketplace公開
+- [x] GitHub Marketplace公開準備（action.yml作成）
+- [ ] GitHub Marketplace公開（v0.1.0リリース時）
 
-### Phase 4: 拡張（未着手）
-- [ ] バグ修正提案機能強化
+### Phase 4: 拡張（進行中）
+- [x] バグ修正提案機能強化（複数言語対応・自己検証ループ）
 - [ ] ライセンス/認証システム
 - [ ] IDE統合（VSCode, JetBrains）
 
