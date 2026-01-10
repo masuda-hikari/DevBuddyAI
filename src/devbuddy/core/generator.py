@@ -14,6 +14,7 @@ from typing import Optional
 
 from devbuddy.llm.client import LLMClient
 from devbuddy.llm.prompts import PromptTemplates
+from devbuddy.core.licensing import LicenseManager, UsageLimitError
 
 
 @dataclass
@@ -60,10 +61,24 @@ class CodeTestGenerator:
 
     __test__ = False  # pytestがテストクラスと誤認識しないようにする
 
-    def __init__(self, client: LLMClient):
+    def __init__(
+        self,
+        client: LLMClient,
+        license_manager: Optional[LicenseManager] = None,
+        skip_license_check: bool = False,
+    ):
         self.client = client
         self.prompts = PromptTemplates()
         self.max_retry = 3
+        self._license_manager = license_manager
+        self._skip_license_check = skip_license_check
+
+    @property
+    def license_manager(self) -> LicenseManager:
+        """ライセンスマネージャーを取得（遅延初期化）"""
+        if self._license_manager is None:
+            self._license_manager = LicenseManager()
+        return self._license_manager
 
     def generate_tests(
         self,
@@ -81,6 +96,15 @@ class CodeTestGenerator:
         Returns:
             GenerationResult: 生成結果
         """
+        # ライセンスチェック
+        if not self._skip_license_check:
+            try:
+                self.license_manager.check_testgen_limit()
+            except UsageLimitError as e:
+                return GenerationResult(
+                    success=False, error=str(e)
+                )
+
         try:
             with open(source_path, encoding="utf-8") as f:
                 source_code = f.read()
@@ -116,6 +140,10 @@ class CodeTestGenerator:
 
         # テスト数をカウント
         test_count = test_code.count("def test_")
+
+        # 利用量を記録
+        if not self._skip_license_check:
+            self.license_manager.record_testgen()
 
         return GenerationResult(
             success=True,
