@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevBuddyAI - AIペアプログラマー</title>
+    <meta name="description" content="DevBuddyAIは、AIを活用したコードレビュー、テスト生成、バグ修正提案を行う開発者支援ツールです。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 1rem 2rem;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-cta {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .nav-cta:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 10rem 2rem 6rem;
+            text-align: center;
+            background: linear-gradient(180deg, var(--bg-dark) 0%, #1a1f35 100%);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Code Demo */
+        .code-demo {
+            max-width: 800px;
+            margin: 4rem auto 0;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot.red { background: #ef4444; }
+        .code-dot.yellow { background: #eab308; }
+        .code-dot.green { background: #22c55e; }
+
+        .code-body {
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .code-line {
+            display: block;
+            padding: 0.2rem 0;
+        }
+
+        .code-comment { color: #6b7280; }
+        .code-command { color: var(--secondary); }
+        .code-output { color: var(--text-secondary); }
+        .code-warning { color: #f59e0b; }
+        .code-bug { color: #ef4444; }
+        .code-success { color: #22c55e; }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 4rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+        }
+
+        /* Stats Section */
+        .stats {
+            background: var(--bg-card);
+            padding: 4rem 2rem;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stats-grid {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat-item h4 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-card .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        .pricing-card .price span {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pricing-features li::before {
+            content: "\u2713";
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .pricing-btn {
+            display: block;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .pricing-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .pricing-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .pricing-btn.secondary {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .pricing-btn.secondary:hover {
+            border-color: var(--primary);
+        }
+
+        /* Security Section */
+        .security {
+            padding: 6rem 2rem;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+        }
+
+        .security-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .security-badges {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .security-badge {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .security-badge-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 6rem 2rem;
+            text-align: center;
+            background: linear-gradient(180deg, var(--bg-dark) 0%, #1a1f35 100%);
+        }
+
+        .cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-section h4 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            padding: 0.25rem 0;
+            transition: color 0.2s;
+        }
+
+        .footer-section a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 2rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .nav-cta {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .pricing-card.popular {
+                transform: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero h1, .hero p, .hero-buttons, .code-demo {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .hero p { animation-delay: 0.1s; }
+        .hero-buttons { animation-delay: 0.2s; }
+        .code-demo { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="logo">DevBuddyAI</a>
+            <ul class="nav-links">
+                <li><a href="#features">機能</a></li>
+                <li><a href="#pricing">料金</a></li>
+                <li><a href="https://github.com/masuda-hikari/DevBuddyAI" target="_blank">GitHub</a></li>
+                <li><a href="#security">セキュリティ</a></li>
+            </ul>
+            <a href="#pricing" class="nav-cta">無料で始める</a>
+            <button class="mobile-menu-btn" aria-label="Menu">&#9776;</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>AIがあなたのコードを<br>レビュー・テスト・修正</h1>
+        <p>DevBuddyAIは、プロフェッショナルな品質のコードレビュー、自動テスト生成、バグ修正提案を提供するAIペアプログラマーです。</p>
+        <div class="hero-buttons">
+            <a href="#pricing" class="btn-primary">無料で始める</a>
+            <a href="https://github.com/masuda-hikari/DevBuddyAI" class="btn-secondary" target="_blank">GitHub</a>
+        </div>
+
+        <!-- Code Demo -->
+        <div class="code-demo">
+            <div class="code-header">
+                <span class="code-dot red"></span>
+                <span class="code-dot yellow"></span>
+                <span class="code-dot green"></span>
+                <span style="margin-left: auto; color: var(--text-secondary); font-size: 0.85rem;">Terminal</span>
+            </div>
+            <div class="code-body">
+                <span class="code-line code-comment"># コードレビューを実行</span>
+                <span class="code-line code-command">$ devbuddy review src/mycode.py</span>
+                <span class="code-line code-output">&nbsp;</span>
+                <span class="code-line code-output">DevBuddyAI Code Review Results:</span>
+                <span class="code-line code-output">================================</span>
+                <span class="code-line code-output">&nbsp;</span>
+                <span class="code-line code-warning">[WARNING] Line 23: 'data' may be None</span>
+                <span class="code-line code-output">  -> Add null check before accessing data.items()</span>
+                <span class="code-line code-output">&nbsp;</span>
+                <span class="code-line code-bug">[BUG] Line 67: Division by zero possible</span>
+                <span class="code-line code-output">  -> Add guard: if count == 0: return 0</span>
+                <span class="code-line code-output">&nbsp;</span>
+                <span class="code-line code-success">Summary: 1 bug, 1 warning found</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <h2 class="section-title">主な機能</h2>
+        <p class="section-subtitle">AIの力で開発効率を最大化</p>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">&#128269;</div>
+                <h3>AIコードレビュー</h3>
+                <p>バグ、セキュリティ脆弱性、スタイル違反を自動検出。具体的な修正提案付きで即座にフィードバック。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#9881;</div>
+                <h3>テスト自動生成</h3>
+                <p>関数やクラスから自動でユニットテストを生成。エッジケース、境界値テストも考慮した網羅的なテスト。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128295;</div>
+                <h3>バグ修正提案</h3>
+                <p>失敗したテストや既知のバグに対して、AIが具体的な修正コードを提案。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128640;</div>
+                <h3>GitHub連携</h3>
+                <p>Pull Requestに自動でレビューコメント。CIワークフローに簡単統合。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#127919;</div>
+                <h3>複数言語対応</h3>
+                <p>Python、JavaScript、TypeScript、Rust、Goなど主要言語をサポート。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#128274;</div>
+                <h3>セキュリティ重視</h3>
+                <p>コードは処理後すぐに破棄。Enterprise版では完全自己ホスト対応。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h4>40%</h4>
+                <p>レビュー時間削減</p>
+            </div>
+            <div class="stat-item">
+                <h4>86%</h4>
+                <p>テストカバレッジ</p>
+            </div>
+            <div class="stat-item">
+                <h4>5+</h4>
+                <p>対応言語</p>
+            </div>
+            <div class="stat-item">
+                <h4>100%</h4>
+                <p>オープンソース</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <h2 class="section-title">シンプルな料金プラン</h2>
+        <p class="section-subtitle">あなたのニーズに合わせて選べる</p>
+
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Free</h3>
+                <p style="color: var(--text-secondary);">オープンソースプロジェクト向け</p>
+                <div class="price">$0<span>/月</span></div>
+                <ul class="pricing-features">
+                    <li>50レビュー/月</li>
+                    <li>公開リポジトリのみ</li>
+                    <li>基本的な静的解析</li>
+                    <li>コミュニティサポート</li>
+                </ul>
+                <a href="https://github.com/masuda-hikari/DevBuddyAI" class="pricing-btn secondary">GitHub で始める</a>
+            </div>
+
+            <div class="pricing-card popular">
+                <span class="popular-badge">人気</span>
+                <h3>Pro</h3>
+                <p style="color: var(--text-secondary);">個人・小規模チーム向け</p>
+                <div class="price">$19<span>/月</span></div>
+                <ul class="pricing-features">
+                    <li>500レビュー/月</li>
+                    <li>プライベートリポジトリ対応</li>
+                    <li>高度なAI分析</li>
+                    <li>優先サポート</li>
+                    <li>GitHub Action統合</li>
+                </ul>
+                <a href="#" class="pricing-btn primary">今すぐ始める</a>
+            </div>
+
+            <div class="pricing-card">
+                <h3>Team</h3>
+                <p style="color: var(--text-secondary);">中規模チーム向け（10名まで）</p>
+                <div class="price">$99<span>/月</span></div>
+                <ul class="pricing-features">
+                    <li>無制限レビュー</li>
+                    <li>チーム管理機能</li>
+                    <li>カスタムルール設定</li>
+                    <li>専用Slack連携</li>
+                    <li>SLA保証</li>
+                </ul>
+                <a href="#" class="pricing-btn secondary">お問い合わせ</a>
+            </div>
+
+            <div class="pricing-card">
+                <h3>Enterprise</h3>
+                <p style="color: var(--text-secondary);">大企業向け</p>
+                <div class="price">要相談</div>
+                <ul class="pricing-features">
+                    <li>自己ホスト対応</li>
+                    <li>SSO/SAML連携</li>
+                    <li>専任サポート担当</li>
+                    <li>SOC 2 Type II準拠</li>
+                    <li>カスタム開発</li>
+                </ul>
+                <a href="#" class="pricing-btn secondary">お問い合わせ</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section id="security" class="security">
+        <div class="security-content">
+            <h2 class="section-title">セキュリティ & プライバシー</h2>
+            <p class="section-subtitle">あなたのコードは安全です</p>
+            <p style="color: var(--text-secondary); margin-top: 1rem;">
+                DevBuddyAIはコードのプライバシーを最優先に設計されています。
+                処理後のコードは即座に破棄され、保存されることはありません。
+                Enterprise版では、コードが社外ネットワークに出ることは一切ありません。
+            </p>
+            <div class="security-badges">
+                <div class="security-badge">
+                    <div class="security-badge-icon">&#128274;</div>
+                    <div>
+                        <strong>TLS 1.3暗号化</strong>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">通信は完全暗号化</p>
+                    </div>
+                </div>
+                <div class="security-badge">
+                    <div class="security-badge-icon">&#128187;</div>
+                    <div>
+                        <strong>自己ホスト対応</strong>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Enterprise版で利用可</p>
+                    </div>
+                </div>
+                <div class="security-badge">
+                    <div class="security-badge-icon">&#9989;</div>
+                    <div>
+                        <strong>SOC 2準拠</strong>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Enterprise版</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <h2>今すぐDevBuddyAIを始めよう</h2>
+        <p>無料プランでAIコードレビューを体験してください。</p>
+        <div class="hero-buttons">
+            <a href="https://github.com/masuda-hikari/DevBuddyAI" class="btn-primary" target="_blank">
+                GitHub で無料で始める
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>DevBuddyAI</h4>
+                <p style="color: var(--text-secondary);">AIペアプログラマーで<br>開発効率を最大化</p>
+            </div>
+            <div class="footer-section">
+                <h4>プロダクト</h4>
+                <ul>
+                    <li><a href="#features">機能</a></li>
+                    <li><a href="#pricing">料金</a></li>
+                    <li><a href="https://github.com/masuda-hikari/DevBuddyAI" target="_blank">GitHub</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>ドキュメント</h4>
+                <ul>
+                    <li><a href="PYPI_PUBLISH_GUIDE.md">インストールガイド</a></li>
+                    <li><a href="https://github.com/masuda-hikari/DevBuddyAI#readme" target="_blank">README</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>リーガル</h4>
+                <ul>
+                    <li><a href="privacy.html">プライバシーポリシー</a></li>
+                    <li><a href="terms.html">利用規約</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 DevBuddyAI. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
