@@ -4,7 +4,7 @@
 
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
-- 進捗: Phase 1-2完了、Phase 3進行中
+- 進捗: Phase 1-2完了、Phase 3-4進行中
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -26,10 +26,17 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - **設定ファイル統合**
   - .devbuddy.yaml からデフォルト値を自動読込
   - CLI引数 > 設定ファイル > デフォルト値の優先順位
-- **自己検証ループ強化** - NEW
+- **自己検証ループ強化**
   - カバレッジ測定オプション
   - 詳細エラーレポート (TestVerificationReport)
   - AIへの構造化エラーコンテキスト提供
+- **バグ修正提案機能強化** - NEW
+  - 複数言語対応 (Python/JS/TS/Rust/Go)
+  - 自己検証ループ (suggest_and_verify)
+  - 詳細検証レポート (FixVerificationReport)
+  - カテゴリ検出 (bug/security/performance/style)
+  - 信頼度スコアリング
+  - スタックトレース抽出
 - PyPI公開用GitHub Actionワークフロー
 - GitHub Pagesデプロイワークフロー (pages.yml)
 - **PR自動レビューワークフロー強化** - NEW
@@ -51,7 +58,7 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 ## コード品質
 - flake8: 0 errors
 - mypy: 0 errors (19 source files)
-- テスト: **319件**全合格
+- テスト: **343件**全合格（+24件）
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -69,6 +76,12 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - ワークフロー: pages.yml
 
 ## 最近の変更
+- 2026-01-11: バグ修正提案機能強化
+  - 複数言語対応（Python/JS/TS/Rust/Go）
+  - 自己検証ループ（suggest_and_verify）
+  - FixVerificationReport追加
+  - カテゴリ・信頼度検出
+  - テスト24件追加（343件に増加）
 - 2026-01-11: PR自動レビューワークフロー強化
   - 複数言語対応（Python/JS/TS/Rust/Go）
   - JSON/Markdown出力対応

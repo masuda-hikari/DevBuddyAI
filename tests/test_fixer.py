@@ -6,7 +6,12 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from devbuddy.core.fixer import BugFixer, FixSuggestion, FixResult
+from devbuddy.core.fixer import (
+    BugFixer,
+    FixSuggestion,
+    FixResult,
+    FixVerificationReport,
+)
 from devbuddy.llm.client import MockLLMClient
 
 
@@ -111,6 +116,137 @@ DESCRIPTION: Incomplete suggestion
 
         assert suggestion is not None
         assert suggestion.line == 1  # デフォルト値
+
+    def test_detect_language_python(self, fixer):
+        """Python言語検出"""
+        assert fixer.detect_language(Path("test.py")) == "python"
+
+    def test_detect_language_javascript(self, fixer):
+        """JavaScript言語検出"""
+        assert fixer.detect_language(Path("test.js")) == "javascript"
+        assert fixer.detect_language(Path("test.ts")) == "javascript"
+        assert fixer.detect_language(Path("test.tsx")) == "javascript"
+
+    def test_detect_language_rust(self, fixer):
+        """Rust言語検出"""
+        assert fixer.detect_language(Path("test.rs")) == "rust"
+
+    def test_detect_language_go(self, fixer):
+        """Go言語検出"""
+        assert fixer.detect_language(Path("test.go")) == "go"
+
+    def test_detect_language_unknown(self, fixer):
+        """未知の拡張子はPythonにフォールバック"""
+        assert fixer.detect_language(Path("test.xyz")) == "python"
+
+    def test_get_test_command_python(self, fixer):
+        """Pythonテストコマンド取得"""
+        cmd = fixer.get_test_command("python", Path("test.py"))
+        assert cmd[0] == "pytest"
+        assert "test.py" in cmd[-1]
+
+    def test_get_test_command_rust(self, fixer):
+        """Rustテストコマンド取得"""
+        cmd = fixer.get_test_command("rust", Path("test.rs"))
+        assert cmd[0] == "cargo"
+        assert cmd[1] == "test"
+
+    def test_detect_category_bug(self, fixer):
+        """バグカテゴリ検出"""
+        assert fixer._detect_category("Fix division bug") == "bug"
+        assert fixer._detect_category("Error handling") == "bug"
+
+    def test_detect_category_security(self, fixer):
+        """セキュリティカテゴリ検出"""
+        assert fixer._detect_category("SQL injection fix") == "security"
+        assert fixer._detect_category("XSS vulnerability") == "security"
+
+    def test_detect_category_performance(self, fixer):
+        """パフォーマンスカテゴリ検出"""
+        assert fixer._detect_category("Optimize loop") == "performance"
+        assert fixer._detect_category("Slow query fix") == "performance"
+
+    def test_detect_category_style(self, fixer):
+        """スタイルカテゴリ検出"""
+        assert fixer._detect_category("Format code") == "style"
+        assert fixer._detect_category("Naming convention") == "style"
+
+    def test_detect_category_unknown(self, fixer):
+        """不明カテゴリ"""
+        assert fixer._detect_category("Some change") == "unknown"
+
+    def test_extract_confidence_explicit(self, fixer):
+        """明示的な信頼度抽出"""
+        data = {"confidence": "0.85", "description": "test"}
+        assert fixer._extract_confidence(data) == 0.85
+
+    def test_extract_confidence_from_description(self, fixer):
+        """説明文からの信頼度推測"""
+        assert fixer._extract_confidence(
+            {"description": "This is a critical fix"}
+        ) == 0.9
+        assert fixer._extract_confidence(
+            {"description": "This likely fixes the issue"}
+        ) == 0.7
+        assert fixer._extract_confidence(
+            {"description": "This might help"}
+        ) == 0.5
+
+    def test_extract_confidence_default(self, fixer):
+        """デフォルト信頼度"""
+        assert fixer._extract_confidence({"description": "Some fix"}) == 0.6
+
+    def test_parse_test_output(self, fixer):
+        """テスト出力解析"""
+        output = "5 passed, 2 failed, 1 error in 0.53s"
+        report = fixer._parse_test_output(output)
+
+        assert report.passed == 5
+        assert report.failed == 2
+        assert report.errors == 1
+
+    def test_parse_test_output_with_skipped(self, fixer):
+        """skippedを含む出力解析"""
+        output = "3 passed, 1 skipped in 0.5s"
+        report = fixer._parse_test_output(output)
+
+        assert report.passed == 3
+        assert report.skipped == 1
+
+    def test_extract_remaining_issues(self, fixer):
+        """残り問題の抽出"""
+        output = """
+        FAILED test_example.py::test_func1 - AssertionError
+        FAILED test_example.py::test_func2 - ValueError
+        ERROR test_example.py::test_func3 - ImportError
+        """
+        issues = fixer._extract_remaining_issues(output)
+
+        assert len(issues) == 3
+        assert "test_example.py::test_func1" in issues
+        assert "test_example.py::test_func3" in issues
+
+    def test_extract_stack_traces(self, fixer):
+        """スタックトレース抽出"""
+        output = """
+        Traceback (most recent call last):
+          File "test.py", line 10, in test_func
+            result = func()
+        ValueError: invalid value
+
+        """
+        traces = fixer._extract_stack_traces(output)
+
+        assert len(traces) >= 1
+
+    def test_build_error_context(self, fixer):
+        """エラーコンテキスト構築"""
+        output = "1 passed, 1 failed in 0.5s\nFAILED test.py::test_func"
+        context = fixer._build_error_context(output, "python")
+
+        assert "エラー解析" in context
+        assert "python" in context
+        assert "失敗=1" in context
 
     def test_apply_fix_success(self, fixer, tmp_path):
         """修正適用成功"""
@@ -249,3 +385,65 @@ class TestFixResult:
         assert result.success is False
         assert result.error == "Test failed"
         assert len(result.suggestions) == 0
+
+    def test_verified_result(self):
+        """検証済み結果"""
+        result = FixResult(
+            success=True,
+            verified=True,
+            attempts=2,
+        )
+
+        assert result.verified is True
+        assert result.attempts == 2
+
+    def test_result_with_verification_report(self):
+        """検証レポート付き結果"""
+        report = FixVerificationReport(
+            passed=5,
+            failed=0,
+            fixed_count=2,
+            applied_suggestions=["Fix 1", "Fix 2"],
+        )
+        result = FixResult(
+            success=True,
+            verified=True,
+            verification_report=report,
+        )
+
+        assert result.verification_report is not None
+        assert result.verification_report.fixed_count == 2
+        assert len(result.verification_report.applied_suggestions) == 2
+
+
+class TestFixVerificationReport:
+    """FixVerificationReportテストクラス"""
+
+    def test_default_values(self):
+        """デフォルト値"""
+        report = FixVerificationReport()
+
+        assert report.passed == 0
+        assert report.failed == 0
+        assert report.errors == 0
+        assert report.skipped == 0
+        assert report.fixed_count == 0
+        assert len(report.remaining_issues) == 0
+        assert len(report.applied_suggestions) == 0
+
+    def test_with_values(self):
+        """値設定"""
+        report = FixVerificationReport(
+            passed=10,
+            failed=2,
+            errors=1,
+            fixed_count=3,
+            remaining_issues=["issue1", "issue2"],
+            applied_suggestions=["fix1", "fix2", "fix3"],
+        )
+
+        assert report.passed == 10
+        assert report.failed == 2
+        assert report.fixed_count == 3
+        assert len(report.remaining_issues) == 2
+        assert len(report.applied_suggestions) == 3
