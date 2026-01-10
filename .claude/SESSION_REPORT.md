@@ -17,40 +17,52 @@
 | テストカバレッジ | **319件**全合格 | 高品質・安定性確保 |
 | パッケージビルド | twine check PASSED | PyPI公開可能 |
 | 公開ワークフロー | GitHub Action作成済み | 自動公開準備完了 |
-| 出力形式対応 | **JSON/Markdown対応(NEW)** | CI/CD連携・エンタープライズ対応 |
-| 設定ファイル統合 | **完了(NEW)** | ユーザビリティ向上 |
+| 出力形式対応 | JSON/Markdown対応 | CI/CD連携・エンタープライズ対応 |
+| 設定ファイル統合 | 完了 | ユーザビリティ向上 |
 | ランディングページ | 作成済み | ユーザー獲得準備完了 |
 | 法務対応 | 完了 | 有料サービス提供可能 |
 | Rust/Go対応 | 実装済み | 対応言語拡大 |
+| **APIドキュメント** | **完了(NEW)** | 開発者体験向上 |
 
 ## 今回のセッション作業
 
 ### 実施内容
 
-1. **出力フォーマッター実装**
-   - `src/devbuddy/core/formatters.py` 新規作成
-   - Text/JSON/Markdown 3形式対応
-   - OutputFormatter抽象基底クラス設計
-   - 全コマンド(review/testgen/fix)に `--format` オプション追加
+1. **MkDocsセットアップ**
+   - mkdocs-material, mkdocstrings, mkdocstrings-python インストール
+   - `mkdocs.yml` 設定ファイル作成
+   - `docs_src/` 配下にドキュメントソース作成
 
-2. **設定ファイル読み込み統合**
-   - `.devbuddy.yaml` からデフォルト値を自動読込
-   - `get_config_value()` ヘルパー関数追加
-   - CLI引数 > 設定ファイル > デフォルト値の優先順位
+2. **APIリファレンスドキュメント作成**
+   - `docs_src/api/reviewer.md` - コードレビュー
+   - `docs_src/api/generator.md` - テスト生成
+   - `docs_src/api/fixer.md` - バグ修正
+   - `docs_src/api/formatters.md` - 出力フォーマット
+   - `docs_src/api/analyzers/*.md` - 各言語Analyzer
+   - `docs_src/api/llm/*.md` - LLMクライアント・プロンプト
+   - `docs_src/api/integrations/*.md` - GitHub/Git連携
 
-3. **テスト追加（18件）**
-   - `tests/test_formatters.py` 新規作成
-   - 3形式のフォーマッター + get_formatter関数テスト
-   - 総テスト数: 301件 → 319件
+3. **一般ドキュメント作成**
+   - `docs_src/index.md` - ホームページ
+   - `docs_src/installation.md` - インストールガイド
+   - `docs_src/usage.md` - 使い方ガイド
+   - `docs_src/contributing.md` - 貢献ガイド
+   - `docs_src/changelog.md` - 変更履歴
 
-4. **コード品質改善**
-   - flake8行長超過エラー修正
-   - mypy型エラー修正
+4. **品質チェック確認**
+   - flake8: 0 errors
+   - mypy: 0 errors (19 source files)
+   - pytest: 319件全合格
+   - MkDocs build: 成功
+
+5. **Git操作**
+   - .gitignore更新（docs_generated/追加）
+   - コミット・プッシュ完了
 
 ### 技術改善
-- JSON出力でCI/CDパイプライン連携が容易に
-- Markdown出力でドキュメント生成・レポート共有が可能に
-- 設定ファイルでプロジェクト固有のデフォルト値を管理可能
+- MkDocsによる美しいAPIドキュメント生成
+- mkdocstringsによるPython docstringからの自動ドキュメント抽出
+- Material themeでモダンなUI
 
 ### ブロッカー
 - **PyPI Trusted Publisher設定**（人間の作業が必要）
@@ -60,10 +72,14 @@
 
 | ファイル | 内容 |
 |---------|------|
-| src/devbuddy/core/formatters.py | 出力フォーマッター（NEW） |
-| src/devbuddy/cli.py | 出力形式・設定ファイル統合 |
-| tests/test_formatters.py | フォーマッターテスト（NEW） |
-| tests/test_cli.py | テスト修正 |
+| mkdocs.yml | MkDocs設定（NEW） |
+| docs_src/index.md | ホームページ（NEW） |
+| docs_src/installation.md | インストールガイド（NEW） |
+| docs_src/usage.md | 使い方ガイド（NEW） |
+| docs_src/api/*.md | APIリファレンス（NEW） |
+| docs_src/contributing.md | 貢献ガイド（NEW） |
+| docs_src/changelog.md | 変更履歴（NEW） |
+| .gitignore | MkDocs出力除外追加 |
 | STATUS.md | ステータス更新 |
 | .claude/DEVELOPMENT_LOG.md | ログ追記 |
 
@@ -106,8 +122,7 @@
    - `pip install devbuddy-ai`
 
 ### 優先度3（AIで継続可能）
-5. **API参照ドキュメント作成**
-   - Sphinx/MkDocs等でドキュメント自動生成
+5. ~~API参照ドキュメント作成~~ **完了**
 6. **GitHub Action自動化**
    - PR自動レビュー機能
 
@@ -119,6 +134,7 @@
 | 品質 | OK | 全品質チェック合格、テスト319件 |
 | 法務対応 | OK | 法務ページ完備 |
 | 完全性 | OK | 有料サービス提供に必要な要素完了 |
+| ドキュメント | OK | APIリファレンス完備（NEW） |
 | 継続性 | OK | 次アクション明確 |
 
 ---
