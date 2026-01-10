@@ -426,3 +426,97 @@ class TestCLI:
             )
 
             assert result.exit_code == 0
+
+    def test_config_list_keys(self, runner, tmp_path):
+        """--list-keysオプション"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["config", "--list-keys"])
+
+            assert result.exit_code == 0
+            assert "language" in result.output
+            assert "review.severity" in result.output
+            assert "testgen.framework" in result.output
+
+    def test_config_get_existing_key(self, runner, tmp_path):
+        """存在するキーの取得"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            # YAMLファイル作成
+            with open(".devbuddy.yaml", "w") as f:
+                f.write("language: python\nreview:\n  severity: high\n")
+
+            result = runner.invoke(cli, ["config", "--get", "review.severity"])
+
+            assert result.exit_code == 0
+            assert "review.severity = high" in result.output
+
+    def test_config_get_nonexistent_key(self, runner, tmp_path):
+        """存在しないキーの取得"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open(".devbuddy.yaml", "w") as f:
+                f.write("language: python\n")
+
+            result = runner.invoke(cli, ["config", "--get", "nonexistent"])
+
+            assert result.exit_code == 0
+            assert "not found" in result.output
+
+    def test_config_get_no_file(self, runner, tmp_path):
+        """設定ファイルなしで--get"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["config", "--get", "language"])
+
+            assert result.exit_code == 0
+            assert "No config file found" in result.output
+
+    def test_config_set_value(self, runner, tmp_path):
+        """値の設定"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            # 先に設定ファイルを作成
+            runner.invoke(cli, ["config", "--init"])
+
+            result = runner.invoke(
+                cli, ["config", "--set", "review.severity=high"]
+            )
+
+            assert result.exit_code == 0
+            assert "Set review.severity = high" in result.output
+
+    def test_config_set_invalid_format(self, runner, tmp_path):
+        """不正なフォーマットで--set"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["config", "--set", "invalid"])
+
+            assert result.exit_code == 0
+            assert "key=value" in result.output
+
+    def test_config_set_creates_file(self, runner, tmp_path):
+        """設定ファイルがない場合に作成"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(
+                cli, ["config", "--set", "language=rust"]
+            )
+
+            assert result.exit_code == 0
+
+    def test_config_custom_path(self, runner, tmp_path):
+        """カスタム設定ファイルパス"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(
+                cli, ["config", "--init", "--path", "custom.yaml"]
+            )
+
+            assert result.exit_code == 0
+            assert "custom.yaml" in result.output
+
+    def test_config_init_content(self, runner, tmp_path):
+        """初期化された設定ファイルの内容確認"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            runner.invoke(cli, ["config", "--init"])
+
+            with open(".devbuddy.yaml", encoding="utf-8") as f:
+                content = f.read()
+
+            assert "language: python" in content
+            assert "review:" in content
+            assert "testgen:" in content
+            assert "ignore_patterns:" in content

@@ -4,7 +4,7 @@
 
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
-- 進捗: Phase 1完了、法務対応完了、Rust/Go Analyzer実装完了、ドキュメント整合性修正完了
+- 進捗: Phase 1完了、法務対応完了、全Analyzer実装完了、CLI強化完了
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -21,17 +21,22 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - LLMクライアント基盤 (client.py, prompts.py)
 - GitHub/Git連携モジュール
 - PyPI公開用GitHub Actionワークフロー
+- **GitHub Pagesデプロイワークフロー (pages.yml)**
 - PyPI公開手順書 (docs/PYPI_PUBLISH_GUIDE.md)
 - ランディングページ (docs/index.html)
 - 法務ページ完備
   - プライバシーポリシー (docs/privacy.html)
   - 利用規約 (docs/terms.html)
   - 特定商取引法に基づく表記 (docs/legal.html)
+- **CLIコンフィグ管理機能強化**
+  - `--get` / `--set` オプション
+  - `--list-keys` オプション
+  - ドット区切りネスト設定対応
 
 ## コード品質
 - flake8: 0 errors
 - mypy: 0 errors (18 source files)
-- テスト: **292件**全合格
+- テスト: **301件**全合格
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -44,27 +49,23 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 3. **PyPI公開後の動作確認**
    - `pip install devbuddy-ai`
    - `devbuddy --version`
-4. **GitHub Pages設定**（オプション）
-   - ランディングページ・法務ページ公開
+4. **GitHub Pages有効化**（人間の作業）
+   - リポジトリSettings → Pages → Source: GitHub Actions
+   - ワークフロー: pages.yml
 
 ## 最近の変更
-- 2026-01-10: ドキュメント整合性修正
-  - README.mdの対応言語表を更新（Rust/Go: Coming Soon → Full）
-  - テストファイルのflake8エラー修正
-- 2026-01-10: Go Analyzer実装
-  - パターンベース解析（panic, recover, fmt.Print, unsafe等）
-  - go vet / staticcheck / golangci-lint連携
-  - 関数/型/メソッド/定数解析
-  - テスト37件追加
-- 2026-01-10: 法務対応完了
-  - プライバシーポリシー作成（個人情報の取り扱い、Cookie、データ保護）
-  - 利用規約作成（サービス条件、禁止事項、免責事項）
-  - 特定商取引法表記作成（事業者情報、料金、解約・返金ポリシー）
-- 2026-01-10: Rust Analyzer実装
-  - パターンベース解析（unwrap, panic!, unsafe等）
-  - clippy/cargo check連携
-  - 関数/構造体/列挙型/トレイト/impl解析
-  - テスト40件追加
+- 2026-01-10: CLI configコマンド強化
+  - --get / --set オプション追加（ドット区切り対応）
+  - --list-keys オプション追加（利用可能キー一覧表示）
+  - --path オプション追加（カスタム設定ファイルパス）
+  - 詳細な設定ファイルテンプレート生成
+  - テスト9件追加（301件に拡大）
+- 2026-01-10: GitHub Pagesワークフロー作成
+  - docs/配下の自動デプロイ設定
+- 2026-01-10: コード品質改善
+  - flake8エラー全修正
+  - test_llm_client.py行長超過修正
+  - test_js_analyzer.py行長超過修正
 
 ## 収益化リンク
 SaaS/API課金モデル → Pro: $19/月、Team: $99/月

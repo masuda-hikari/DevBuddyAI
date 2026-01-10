@@ -151,7 +151,8 @@ class TestLLMClientComplete:
         mock_anthropic = MagicMock()
         mock_content = type("MockContent", (), {"text": "AI response"})()
         mock_message = type("MockMessage", (), {"content": [mock_content]})()
-        mock_anthropic.Anthropic.return_value.messages.create.return_value = mock_message
+        mock_client = mock_anthropic.Anthropic.return_value
+        mock_client.messages.create.return_value = mock_message
 
         sys.modules["anthropic"] = mock_anthropic
 
@@ -170,7 +171,8 @@ class TestLLMClientComplete:
         mock_anthropic = MagicMock()
         mock_content = type("MockContent", (), {})()
         mock_message = type("MockMessage", (), {"content": [mock_content]})()
-        mock_anthropic.Anthropic.return_value.messages.create.return_value = mock_message
+        mock_client = mock_anthropic.Anthropic.return_value
+        mock_client.messages.create.return_value = mock_message
 
         sys.modules["anthropic"] = mock_anthropic
 
@@ -190,7 +192,8 @@ class TestLLMClientComplete:
         mock_message = type("MockMessage", (), {"content": "OpenAI response"})()
         mock_choice = type("MockChoice", (), {"message": mock_message})()
         mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
-        mock_openai.OpenAI.return_value.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai.OpenAI.return_value
+        mock_client.chat.completions.create.return_value = mock_response
 
         sys.modules["openai"] = mock_openai
 
@@ -210,7 +213,8 @@ class TestLLMClientComplete:
         mock_message = type("MockMessage", (), {"content": None})()
         mock_choice = type("MockChoice", (), {"message": mock_message})()
         mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
-        mock_openai.OpenAI.return_value.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai.OpenAI.return_value
+        mock_client.chat.completions.create.return_value = mock_response
 
         sys.modules["openai"] = mock_openai
 
@@ -268,7 +272,8 @@ class TestLLMClientCompleteWithSystem:
         mock_anthropic = MagicMock()
         mock_content = type("MockContent", (), {"text": "System response"})()
         mock_message = type("MockMessage", (), {"content": [mock_content]})()
-        mock_anthropic.Anthropic.return_value.messages.create.return_value = mock_message
+        mock_client = mock_anthropic.Anthropic.return_value
+        mock_client.messages.create.return_value = mock_message
 
         sys.modules["anthropic"] = mock_anthropic
 
@@ -287,7 +292,8 @@ class TestLLMClientCompleteWithSystem:
         mock_anthropic = MagicMock()
         mock_content = type("MockContent", (), {})()
         mock_message = type("MockMessage", (), {"content": [mock_content]})()
-        mock_anthropic.Anthropic.return_value.messages.create.return_value = mock_message
+        mock_client = mock_anthropic.Anthropic.return_value
+        mock_client.messages.create.return_value = mock_message
 
         sys.modules["anthropic"] = mock_anthropic
 
@@ -307,7 +313,8 @@ class TestLLMClientCompleteWithSystem:
         mock_message = type("MockMessage", (), {"content": "OpenAI sys"})()
         mock_choice = type("MockChoice", (), {"message": mock_message})()
         mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
-        mock_openai.OpenAI.return_value.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai.OpenAI.return_value
+        mock_client.chat.completions.create.return_value = mock_response
 
         sys.modules["openai"] = mock_openai
 
@@ -327,7 +334,8 @@ class TestLLMClientCompleteWithSystem:
         mock_message = type("MockMessage", (), {"content": None})()
         mock_choice = type("MockChoice", (), {"message": mock_message})()
         mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
-        mock_openai.OpenAI.return_value.chat.completions.create.return_value = mock_response
+        mock_client = mock_openai.OpenAI.return_value
+        mock_client.chat.completions.create.return_value = mock_response
 
         sys.modules["openai"] = mock_openai
 
