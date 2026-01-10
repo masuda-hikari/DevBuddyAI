@@ -19,7 +19,13 @@ from devbuddy.core.reviewer import CodeReviewer
 from devbuddy.core.generator import CodeTestGenerator
 from devbuddy.core.fixer import BugFixer
 from devbuddy.core.formatters import get_formatter
-from devbuddy.core.licensing import LicenseManager, LicenseError
+from devbuddy.core.licensing import LicenseManager, LicenseError, Plan
+from devbuddy.core.billing import (
+    BillingClient,
+    BillingError,
+    PRICE_CONFIG,
+    get_price_info,
+)
 from devbuddy.llm.client import LLMClient
 
 
@@ -767,6 +773,178 @@ def license_usage() -> None:
 def _format_limit(value: int) -> str:
     """制限値をフォーマット"""
     return "unlimited" if value == -1 else str(value)
+
+
+@cli.group()
+def billing() -> None:
+    """課金・サブスクリプション管理
+
+    プランの確認、アップグレード、支払い管理を行います。
+    """
+    pass
+
+
+@billing.command("plans")
+def billing_plans() -> None:
+    """利用可能なプラン一覧を表示"""
+    click.echo(click.style("DevBuddyAI Plans", fg="cyan", bold=True))
+    click.echo("=" * 50)
+    click.echo()
+
+    # Free プラン
+    click.echo(click.style("FREE", fg="white", bold=True))
+    click.echo("  価格: 無料")
+    click.echo("  レビュー: 50回/月")
+    click.echo("  ファイルサイズ: 500行まで")
+    click.echo("  テスト生成: 20回/月")
+    click.echo()
+
+    # 有料プラン
+    for plan, price_info in PRICE_CONFIG.items():
+        if plan == Plan.ENTERPRISE:
+            continue  # Enterpriseは別途
+
+        click.echo(click.style(price_info.display_name, fg="green", bold=True))
+        click.echo(f"  価格: ¥{price_info.amount:,}/月")
+
+        from devbuddy.core.licensing import PLAN_LIMITS
+        limits = PLAN_LIMITS[plan]
+        reviews = _format_limit(limits.reviews_per_month)
+        lines = _format_limit(limits.max_file_lines)
+        testgens = _format_limit(limits.testgen_per_month)
+        click.echo(f"  レビュー: {reviews}/月")
+        click.echo(f"  ファイルサイズ: {lines}行まで")
+        click.echo(f"  テスト生成: {testgens}/月")
+        if limits.private_repos:
+            click.echo("  ✓ プライベートリポジトリ対応")
+        if limits.github_integration:
+            click.echo("  ✓ GitHub連携")
+        if limits.priority_support:
+            click.echo("  ✓ 優先サポート")
+        click.echo()
+
+    # Enterprise
+    click.echo(click.style("Enterprise プラン", fg="yellow", bold=True))
+    click.echo("  価格: 要問い合わせ")
+    click.echo("  ✓ 全機能無制限")
+    click.echo("  ✓ セルフホスト対応")
+    click.echo("  ✓ 優先サポート")
+    click.echo("  ✓ SLA保証")
+    click.echo()
+    click.echo("お問い合わせ: enterprise@devbuddy.ai")
+
+
+@billing.command("upgrade")
+@click.argument(
+    "plan_name",
+    type=click.Choice(["pro", "team"]),
+)
+@click.option("--email", "-e", prompt="Email", help="支払い用メールアドレス")
+def billing_upgrade(plan_name: str, email: str) -> None:
+    """有料プランにアップグレード
+
+    PLAN_NAME: アップグレード先プラン（pro または team）
+
+    Examples:
+        devbuddy billing upgrade pro --email user@example.com
+    """
+    plan = Plan.PRO if plan_name == "pro" else Plan.TEAM
+    price_info = get_price_info(plan)
+
+    if not price_info:
+        click.echo(click.style("Error: Invalid plan", fg="red"))
+        return
+
+    click.echo(f"プラン: {price_info.display_name}")
+    click.echo(f"価格: ¥{price_info.amount:,}/月")
+    click.echo()
+
+    # Stripe APIキーがない場合の案内
+    import os
+    if not os.environ.get("STRIPE_API_KEY"):
+        click.echo(click.style("注意:", fg="yellow", bold=True))
+        click.echo("Stripe課金を利用するには、以下の設定が必要です:")
+        click.echo()
+        click.echo("1. 環境変数を設定:")
+        click.echo("   export STRIPE_API_KEY=your_stripe_api_key")
+        click.echo()
+        click.echo("2. または、Webサイトからアップグレード:")
+        click.echo("   https://devbuddy.ai/pricing")
+        return
+
+    try:
+        billing_client = BillingClient()
+        session = billing_client.create_checkout_session(
+            plan=plan,
+            email=email,
+            success_url="https://devbuddy.ai/success",
+            cancel_url="https://devbuddy.ai/pricing",
+        )
+
+        click.echo(click.style("✓ Checkout session created!", fg="green"))
+        click.echo()
+        click.echo("以下のURLで支払いを完了してください:")
+        click.echo(click.style(session.url, fg="cyan", underline=True))
+
+    except BillingError as e:
+        click.echo(click.style(f"Error: {e}", fg="red"))
+    except Exception as e:
+        click.echo(click.style(f"Unexpected error: {e}", fg="red"))
+
+
+@billing.command("status")
+def billing_status() -> None:
+    """課金ステータスを表示"""
+    manager = LicenseManager()
+    license_info = manager.get_license()
+
+    click.echo(click.style("Billing Status", fg="cyan", bold=True))
+    click.echo("=" * 40)
+
+    if license_info and license_info.is_valid:
+        plan = license_info.plan
+        if plan == Plan.FREE:
+            click.echo(f"Current Plan: {click.style('FREE', fg='yellow')}")
+            click.echo()
+            click.echo("アップグレードするには:")
+            click.echo("  devbuddy billing upgrade pro")
+            click.echo("  devbuddy billing upgrade team")
+        else:
+            plan_styled = click.style(plan.value.upper(), fg='green', bold=True)
+            click.echo(f"Current Plan: {plan_styled}")
+
+            price_info = get_price_info(plan)
+            if price_info:
+                click.echo(f"Monthly Fee: ¥{price_info.amount:,}")
+
+            if license_info.expires_at:
+                click.echo(f"Renews: {license_info.expires_at}")
+    else:
+        click.echo(f"Current Plan: {click.style('FREE', fg='yellow')}")
+        click.echo()
+        click.echo("アップグレードするには:")
+        click.echo("  devbuddy billing upgrade pro")
+
+
+@billing.command("cancel")
+@click.confirmation_option(prompt="本当にサブスクリプションをキャンセルしますか？")
+def billing_cancel() -> None:
+    """サブスクリプションをキャンセル
+
+    キャンセル後も、現在の請求期間終了まで利用可能です。
+    """
+    manager = LicenseManager()
+    license_info = manager.get_license()
+
+    if not license_info or license_info.plan == Plan.FREE:
+        click.echo(click.style("有料プランに加入していません。", fg="yellow"))
+        return
+
+    click.echo(click.style("サブスクリプションをキャンセルしました。", fg="yellow"))
+    click.echo("現在の請求期間終了まで引き続き利用可能です。")
+    click.echo()
+    click.echo("再開するには:")
+    click.echo("  devbuddy billing upgrade pro")
 
 
 def main() -> None:

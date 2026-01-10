@@ -5,7 +5,7 @@
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
 - 進捗: Phase 1-2完了、Phase 3-4進行中
-- **NEW**: ライセンス・認証システム実装完了
+- **NEW**: Stripe課金連携システム実装完了
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -38,12 +38,18 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
   - カテゴリ検出 (bug/security/performance/style)
   - 信頼度スコアリング
   - スタックトレース抽出
-- **ライセンス・認証システム (NEW)**
+- **ライセンス・認証システム**
   - licensing.py: プラン管理・利用量トラッキング
   - FREE/PRO/TEAM/ENTERPRISEプラン対応
   - 月間利用制限・ファイルサイズ制限
   - CLIコマンド: license activate/status/usage/deactivate
   - コアエンジン統合（自動制限チェック）
+- **Stripe課金連携システム (NEW)**
+  - billing.py: Stripe Checkout/Webhook処理
+  - 日本円価格設定（Pro: ¥1,980/月、Team: ¥9,800/月）
+  - CLIコマンド: billing plans/upgrade/status/cancel
+  - Webhook処理（checkout完了/支払い成功・失敗/サブスクリプション更新）
+  - ライセンスシステムとの自動連携
 - PyPI公開用GitHub Actionワークフロー
 - GitHub Pagesデプロイワークフロー (pages.yml)
 - **PR自動レビューワークフロー強化**
@@ -68,8 +74,8 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 
 ## コード品質
 - flake8: 0 errors
-- mypy: 0 errors (20 source files)
-- テスト: **386件**全合格（+43件）
+- mypy: 0 errors (21 source files)
+- テスト: **414件**全合格（+28件）
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -91,6 +97,12 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - または: Actions → Publish this action to the Marketplace
 
 ## 最近の変更
+- 2026-01-11: **Stripe課金連携システム追加**
+  - billing.py新規作成（BillingClient/BillingWebhookHandler）
+  - CLI: billing plans/upgrade/status/cancel
+  - 日本円価格設定（Pro: ¥1,980、Team: ¥9,800）
+  - Webhookイベント処理（checkout/payment/subscription）
+  - テスト28件追加（414件に増加）
 - 2026-01-11: **ライセンス・認証システム追加**
   - licensing.py新規作成（Plan/PlanLimits/LicenseManager）
   - CLI: license activate/status/usage/deactivate
@@ -111,9 +123,9 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - 2026-01-11: 設定ファイル読み込み統合
 
 ## 収益化リンク
-SaaS/API課金モデル → Pro: $19/月、Team: $99/月
+SaaS/API課金モデル → Pro: ¥1,980/月、Team: ¥9,800/月
 目標: 1000万円達成に向けたPyPI公開・ユーザー獲得開始
-**NEW**: ライセンスシステム実装完了 → 課金導線確立
+**NEW**: Stripe課金連携完了 → 決済導線確立
 
 ## プラン別制限
 | プラン | レビュー/月 | ファイル行数 | テスト生成/月 | 修正提案/月 |
