@@ -35,6 +35,9 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
   - 利用規約 (docs/terms.html)
   - 特定商取引法に基づく表記 (docs/legal.html)
 - CLIコンフィグ管理機能強化
+- **MkDocs APIリファレンスドキュメント** - NEW
+  - docs_src/配下に全APIドキュメント
+  - mkdocs.yml設定完了
 
 ## コード品質
 - flake8: 0 errors
@@ -57,6 +60,10 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - ワークフロー: pages.yml
 
 ## 最近の変更
+- 2026-01-11: MkDocs APIリファレンスドキュメント追加
+  - docs_src/配下にAPIドキュメント作成
+  - Core/Analyzers/LLM/Integrations全モジュール対応
+  - mkdocs.yml設定ファイル作成
 - 2026-01-11: CLI出力形式対応（JSON/Markdown）
   - 新規: src/devbuddy/core/formatters.py
   - review/testgen/fix コマンドに --format オプション追加
