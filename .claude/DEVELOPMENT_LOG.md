@@ -1,5 +1,50 @@
 ﻿# DevBuddyAI 開発ログ
 
+## 2026-01-11 セッション（出力形式対応・設定ファイル統合）
+
+### 完了タスク
+1. **出力フォーマッター実装**
+   - src/devbuddy/core/formatters.py 新規作成
+   - Text/JSON/Markdown 3形式対応
+   - 全コマンド(review/testgen/fix)に --format オプション追加
+   - OutputFormatter抽象基底クラス設計
+
+2. **設定ファイル読み込み統合**
+   - .devbuddy.yaml からデフォルト値を自動読込
+   - get_config_value() ヘルパー関数追加
+   - review: severity, output.format
+   - testgen: framework, output.format
+   - fix: output.format
+
+3. **テスト追加（18件）**
+   - tests/test_formatters.py 新規作成
+   - TextFormatter/JSONFormatter/MarkdownFormatter
+   - get_formatter関数テスト
+
+4. **コード品質改善**
+   - flake8行長超過エラー修正（cli.py, formatters.py）
+   - mypy型エラー修正（formatters.py）
+   - 総テスト数: 301件 → 319件
+
+### 変更ファイル一覧
+- src/devbuddy/core/formatters.py (新規)
+- src/devbuddy/cli.py
+- tests/test_formatters.py (新規)
+- tests/test_cli.py
+- STATUS.md
+- .claude/DEVELOPMENT_LOG.md
+
+### 収益化リンク
+- 出力形式対応 → CI/CD連携しやすくなり → エンタープライズ顧客獲得
+- 設定ファイル統合 → ユーザビリティ向上 → 有料プラン転換率向上
+
+### 次回タスク
+1. PyPI Trusted Publisher設定（人間の作業）
+2. GitHub Pages有効化（人間の作業）
+3. GitHubリリースタグv0.1.0作成
+
+---
+
 ## 2026-01-10 セッション（CLI強化・GitHub Pages対応）
 
 ### 完了タスク

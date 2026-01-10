@@ -321,7 +321,7 @@ class TestCLI:
                 f.write("def add(a, b): return a + b")
 
             result = runner.invoke(
-                cli, ["testgen", "calc.py", "-f", "add"]
+                cli, ["testgen", "calc.py", "-fn", "add"]
             )
 
             assert result.exit_code == 0
@@ -466,7 +466,7 @@ class TestCLI:
             result = runner.invoke(cli, ["config", "--get", "language"])
 
             assert result.exit_code == 0
-            assert "No config file found" in result.output
+            assert "No config file" in result.output
 
     def test_config_set_value(self, runner, tmp_path):
         """値の設定"""

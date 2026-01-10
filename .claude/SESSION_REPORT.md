@@ -1,6 +1,6 @@
 # DevBuddyAI - セッションレポート
 
-最終更新: 2026-01-10
+最終更新: 2026-01-11
 
 ## 現在の状態
 
@@ -14,52 +14,43 @@
 |------|------|----------------|
 | MVP実装 | 完了 | SaaS提供準備完了 |
 | コード品質 | flake8/mypy 0エラー | リリース可能品質 |
-| テストカバレッジ | **301件**全合格 | 高品質・安定性確保 |
+| テストカバレッジ | **319件**全合格 | 高品質・安定性確保 |
 | パッケージビルド | twine check PASSED | PyPI公開可能 |
 | 公開ワークフロー | GitHub Action作成済み | 自動公開準備完了 |
-| 公開手順書 | 作成済み | 人間が実行可能 |
+| 出力形式対応 | **JSON/Markdown対応(NEW)** | CI/CD連携・エンタープライズ対応 |
+| 設定ファイル統合 | **完了(NEW)** | ユーザビリティ向上 |
 | ランディングページ | 作成済み | ユーザー獲得準備完了 |
 | 法務対応 | 完了 | 有料サービス提供可能 |
 | Rust/Go対応 | 実装済み | 対応言語拡大 |
-| **CLI強化** | 完了（NEW） | ユーザビリティ向上 |
-| **GitHub Pages** | ワークフロー作成済み（NEW） | サイト公開準備完了 |
 
 ## 今回のセッション作業
 
 ### 実施内容
 
-1. **GitHub Pagesデプロイワークフロー作成**
-   - `.github/workflows/pages.yml` 新規作成
-   - docs/配下の自動デプロイ設定
-   - mainブランチへのpush時に自動実行
-   - actions/configure-pages, upload-pages-artifact, deploy-pages使用
+1. **出力フォーマッター実装**
+   - `src/devbuddy/core/formatters.py` 新規作成
+   - Text/JSON/Markdown 3形式対応
+   - OutputFormatter抽象基底クラス設計
+   - 全コマンド(review/testgen/fix)に `--format` オプション追加
 
-2. **CLI configコマンド大幅強化**
-   - `--get KEY` オプション追加
-     - ドット区切りキー対応（例: `review.severity`）
-     - ネストされた設定値の取得
-   - `--set KEY=VALUE` オプション追加
-     - 値の自動型変換（bool, int, string）
-     - ネストされた設定の更新
-   - `--list-keys` オプション追加
-     - 利用可能な全設定キーと説明の一覧表示
-   - `--path` オプション追加
-     - カスタム設定ファイルパス指定
-   - 設定ファイルテンプレート大幅拡充
-     - review, testgen, fix, output セクション追加
-     - 各設定項目に日本語コメント付き
+2. **設定ファイル読み込み統合**
+   - `.devbuddy.yaml` からデフォルト値を自動読込
+   - `get_config_value()` ヘルパー関数追加
+   - CLI引数 > 設定ファイル > デフォルト値の優先順位
 
-3. **テスト追加（9件）**
-   - configコマンドの新機能をすべてカバー
-   - 総テスト数: 292件 → 301件
+3. **テスト追加（18件）**
+   - `tests/test_formatters.py` 新規作成
+   - 3形式のフォーマッター + get_formatter関数テスト
+   - 総テスト数: 301件 → 319件
 
 4. **コード品質改善**
    - flake8行長超過エラー修正
-   - mypy型警告対応（yaml import）
+   - mypy型エラー修正
 
 ### 技術改善
-- configコマンドのCLI/UX改善
-- 設定管理の柔軟性向上
+- JSON出力でCI/CDパイプライン連携が容易に
+- Markdown出力でドキュメント生成・レポート共有が可能に
+- 設定ファイルでプロジェクト固有のデフォルト値を管理可能
 
 ### ブロッカー
 - **PyPI Trusted Publisher設定**（人間の作業が必要）
@@ -69,11 +60,10 @@
 
 | ファイル | 内容 |
 |---------|------|
-| .github/workflows/pages.yml | GitHub Pagesワークフロー（NEW） |
-| src/devbuddy/cli.py | configコマンド強化 |
-| tests/test_cli.py | テスト9件追加 |
-| tests/test_llm_client.py | flake8エラー修正 |
-| tests/test_js_analyzer.py | flake8エラー修正 |
+| src/devbuddy/core/formatters.py | 出力フォーマッター（NEW） |
+| src/devbuddy/cli.py | 出力形式・設定ファイル統合 |
+| tests/test_formatters.py | フォーマッターテスト（NEW） |
+| tests/test_cli.py | テスト修正 |
 | STATUS.md | ステータス更新 |
 | .claude/DEVELOPMENT_LOG.md | ログ追記 |
 
@@ -84,6 +74,7 @@
 - GitHub Pagesでランディングページ公開 → 認知度向上
 
 ### 中期（1-3ヶ月）
+- JSON出力でCI/CD連携 → エンタープライズ顧客獲得
 - GitHub Marketplace公開
 - Pro版: $19/月、Team版: $99/月
 
@@ -115,19 +106,17 @@
    - `pip install devbuddy-ai`
 
 ### 優先度3（AIで継続可能）
-5. **CLI機能拡張**
-   - JSON/Markdown出力形式対応
-   - 設定ファイル読み込み統合
-6. **ドキュメント拡充**
-   - API reference
-   - 使い方ガイド
+5. **API参照ドキュメント作成**
+   - Sphinx/MkDocs等でドキュメント自動生成
+6. **GitHub Action自動化**
+   - PR自動レビュー機能
 
 ## 自己診断
 
 | 観点 | 評価 | コメント |
 |------|------|---------|
 | 収益価値 | BLOCKED | Trusted Publisher / GitHub Pages設定待ち |
-| 品質 | OK | 全品質チェック合格、テスト301件 |
+| 品質 | OK | 全品質チェック合格、テスト319件 |
 | 法務対応 | OK | 法務ページ完備 |
 | 完全性 | OK | 有料サービス提供に必要な要素完了 |
 | 継続性 | OK | 次アクション明確 |
