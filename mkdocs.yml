@@ -1,0 +1,85 @@
+site_name: DevBuddyAI
+site_description: AI駆動の開発者支援ツール - コードレビュー、テスト生成、バグ修正提案
+site_url: https://masuda-hikari.github.io/DevBuddyAI/docs/
+repo_url: https://github.com/masuda-hikari/DevBuddyAI
+repo_name: masuda-hikari/DevBuddyAI
+
+docs_dir: docs_src
+site_dir: docs_generated
+
+theme:
+  name: material
+  language: ja
+  palette:
+    - scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: ダークモードに切替
+    - scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: ライトモードに切替
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_toc_entry: false
+
+nav:
+  - ホーム: index.md
+  - 導入:
+    - インストール: installation.md
+    - 使い方: usage.md
+  - APIリファレンス:
+    - 概要: api/index.md
+    - Core:
+      - コードレビュー: api/reviewer.md
+      - テスト生成: api/generator.md
+      - バグ修正: api/fixer.md
+      - 出力フォーマット: api/formatters.md
+    - Analyzers:
+      - Python: api/analyzers/python.md
+      - JavaScript/TypeScript: api/analyzers/js.md
+      - Rust: api/analyzers/rust.md
+      - Go: api/analyzers/go.md
+    - LLM:
+      - クライアント: api/llm/client.md
+      - プロンプト: api/llm/prompts.md
+    - Integrations:
+      - GitHub: api/integrations/github.md
+      - Git: api/integrations/git.md
+  - 開発:
+    - 貢献ガイド: contributing.md
+    - 変更履歴: changelog.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/masuda-hikari/DevBuddyAI
