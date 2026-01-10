@@ -1,10 +1,10 @@
-﻿﻿﻿﻿﻿﻿# DevBuddyAI - ステータス
+# DevBuddyAI - ステータス
 
 最終更新: 2026-01-11
 
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
-- 進捗: Phase 1完了、全機能実装完了
+- 進捗: Phase 1-2完了、Phase 3進行中
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -20,14 +20,23 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - テスト生成エンジン (generator.py → CodeTestGenerator)
 - LLMクライアント基盤 (client.py, prompts.py)
 - GitHub/Git連携モジュール
-- **出力フォーマッター (formatters.py)** - NEW
+- **出力フォーマッター (formatters.py)**
   - Text / JSON / Markdown 形式対応
   - 全コマンド (review/testgen/fix) に統合
-- **設定ファイル統合** - NEW
+- **設定ファイル統合**
   - .devbuddy.yaml からデフォルト値を自動読込
   - CLI引数 > 設定ファイル > デフォルト値の優先順位
+- **自己検証ループ強化** - NEW
+  - カバレッジ測定オプション
+  - 詳細エラーレポート (TestVerificationReport)
+  - AIへの構造化エラーコンテキスト提供
 - PyPI公開用GitHub Actionワークフロー
 - GitHub Pagesデプロイワークフロー (pages.yml)
+- **PR自動レビューワークフロー強化** - NEW
+  - Python/JS/TS/Rust/Go対応
+  - JSON/Markdown出力
+  - 既存コメント更新
+  - Check Run作成
 - PyPI公開手順書 (docs/PYPI_PUBLISH_GUIDE.md)
 - ランディングページ (docs/index.html)
 - 法務ページ完備
@@ -35,14 +44,14 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
   - 利用規約 (docs/terms.html)
   - 特定商取引法に基づく表記 (docs/legal.html)
 - CLIコンフィグ管理機能強化
-- **MkDocs APIリファレンスドキュメント** - NEW
+- **MkDocs APIリファレンスドキュメント**
   - docs_src/配下に全APIドキュメント
   - mkdocs.yml設定完了
 
 ## コード品質
 - flake8: 0 errors
 - mypy: 0 errors (19 source files)
-- テスト: **319件**全合格 (+18件)
+- テスト: **319件**全合格
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -60,19 +69,18 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - ワークフロー: pages.yml
 
 ## 最近の変更
+- 2026-01-11: PR自動レビューワークフロー強化
+  - 複数言語対応（Python/JS/TS/Rust/Go）
+  - JSON/Markdown出力対応
+  - 既存コメント更新機能
+  - Check Run作成機能
+- 2026-01-11: 自己検証ループ強化
+  - TestVerificationReport追加
+  - カバレッジ測定オプション
+  - 詳細エラーコンテキスト
 - 2026-01-11: MkDocs APIリファレンスドキュメント追加
-  - docs_src/配下にAPIドキュメント作成
-  - Core/Analyzers/LLM/Integrations全モジュール対応
-  - mkdocs.yml設定ファイル作成
 - 2026-01-11: CLI出力形式対応（JSON/Markdown）
-  - 新規: src/devbuddy/core/formatters.py
-  - review/testgen/fix コマンドに --format オプション追加
-  - テスト18件追加（test_formatters.py）
 - 2026-01-11: 設定ファイル読み込み統合
-  - .devbuddy.yaml からデフォルト値を自動読込
-  - CLI引数が未指定時に設定ファイルの値を使用
-- 2026-01-10: CLI configコマンド強化
-- 2026-01-10: GitHub Pagesワークフロー作成
 
 ## 収益化リンク
 SaaS/API課金モデル → Pro: $19/月、Team: $99/月
