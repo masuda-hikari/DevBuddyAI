@@ -60,6 +60,11 @@ htmlcov/
 *.backup
 tmp/
 temp/
+_temp_*
+
+# MkDocs generated
+docs_generated/
+site/
 
 # OS固有
 Desktop.ini
