@@ -1,5 +1,55 @@
 ﻿# DevBuddyAI 開発ログ
 
+## 2026-01-10 セッション（CLI強化・GitHub Pages対応）
+
+### 完了タスク
+1. **GitHub Pagesデプロイワークフロー作成**
+   - .github/workflows/pages.yml 新規作成
+   - docs/配下の自動デプロイ設定
+   - mainブランチへのpush時に自動実行
+
+2. **CLI configコマンド強化**
+   - `--get KEY` オプション: 設定値取得（ドット区切り対応）
+   - `--set KEY=VALUE` オプション: 設定値変更
+   - `--list-keys` オプション: 利用可能キー一覧表示
+   - `--path` オプション: カスタム設定ファイルパス指定
+   - 詳細な設定ファイルテンプレート生成
+   - 型自動変換（true/false → bool、数値 → int）
+
+3. **テスト追加（9件）**
+   - test_config_list_keys
+   - test_config_get_existing_key
+   - test_config_get_nonexistent_key
+   - test_config_get_no_file
+   - test_config_set_value
+   - test_config_set_invalid_format
+   - test_config_set_creates_file
+   - test_config_custom_path
+   - test_config_init_content
+
+4. **コード品質改善**
+   - flake8行長超過エラー修正（test_llm_client.py, test_js_analyzer.py）
+   - mypy型警告対応（yaml import）
+   - 総テスト数: 292件 → 301件
+
+### 変更ファイル一覧
+- .github/workflows/pages.yml (新規)
+- src/devbuddy/cli.py
+- tests/test_cli.py
+- tests/test_llm_client.py
+- tests/test_js_analyzer.py
+
+### 収益化リンク
+- CLI使いやすさ向上 → ユーザー満足度向上 → 有料プラン転換率向上
+- GitHub Pages対応 → ランディングページ公開 → ユーザー獲得
+
+### 次回タスク
+1. PyPI Trusted Publisher設定（人間の作業）
+2. GitHub Pages有効化（人間の作業）
+3. GitHubリリースタグv0.1.0作成
+
+---
+
 ## 2026-01-10 セッション（ドキュメント整合性修正）
 
 ### 完了タスク

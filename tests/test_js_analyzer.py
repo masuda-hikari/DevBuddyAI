@@ -101,7 +101,11 @@ class TestPatternAnalysis:
         analyzer = JavaScriptAnalyzer()
         code = "try { foo(); } catch (e) {}"
         issues = analyzer._analyze_patterns(code)
-        assert any(i.level == "warning" and "catch" in i.message.lower() for i in issues)
+        has_catch_warn = any(
+            i.level == "warning" and "catch" in i.message.lower()
+            for i in issues
+        )
+        assert has_catch_warn
 
     def test_detect_todo_comment(self):
         """TODO/FIXMEコメントの検出"""
