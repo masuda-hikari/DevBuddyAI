@@ -290,3 +290,159 @@ class TestGitOperationsWithMock:
         hook_file = mock_git_repo / ".git" / "hooks" / "pre-commit"
         assert hook_file.exists()
         assert "echo test" in hook_file.read_text()
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_get_diff(self, mock_run, mock_git_repo):
+        """diff取得"""
+        mock_run.return_value = MagicMock(
+            stdout="@@ -1 +1 @@\n-old\n+new",
+            returncode=0
+        )
+
+        ops = GitOperations(repo_path=mock_git_repo)
+        diff = ops.get_diff()
+
+        assert isinstance(diff, DiffInfo)
+        assert "@@ -1 +1 @@" in diff.content
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_get_diff_staged(self, mock_run, mock_git_repo):
+        """ステージ済みdiff取得"""
+        mock_run.return_value = MagicMock(
+            stdout="staged diff content",
+            returncode=0
+        )
+
+        ops = GitOperations(repo_path=mock_git_repo)
+        ops.get_diff(staged=True)  # 戻り値は検証不要
+
+        # --cached オプションが使われていることを確認
+        call_args_list = mock_run.call_args_list
+        found_cached = False
+        for call_args in call_args_list:
+            if "--cached" in call_args[0][0]:
+                found_cached = True
+                break
+        assert found_cached
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_get_diff_with_commit(self, mock_run, mock_git_repo):
+        """特定コミットとのdiff取得"""
+        mock_run.return_value = MagicMock(
+            stdout="commit diff",
+            returncode=0
+        )
+
+        ops = GitOperations(repo_path=mock_git_repo)
+        diff = ops.get_diff(commit="HEAD~1")
+
+        assert isinstance(diff, DiffInfo)
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_get_diff_with_stat(self, mock_run, mock_git_repo):
+        """統計付きdiff取得"""
+        # diffコマンドとstatコマンドで異なる結果を返す
+        def mock_run_side_effect(args, **kwargs):
+            if "--stat" in args:
+                return MagicMock(
+                    stdout="3 files changed, 10 insertions(+), 5 deletions(-)",
+                    returncode=0
+                )
+            return MagicMock(
+                stdout="diff content",
+                returncode=0
+            )
+
+        mock_run.side_effect = mock_run_side_effect
+
+        ops = GitOperations(repo_path=mock_git_repo)
+        diff = ops.get_diff()
+
+        assert diff.files_changed == 3
+        assert diff.insertions == 10
+        assert diff.deletions == 5
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_get_changed_files_with_commit(self, mock_run, mock_git_repo):
+        """特定コミットとの変更ファイル取得"""
+        mock_run.return_value = MagicMock(
+            stdout="file1.py\nfile2.py\n",
+            returncode=0
+        )
+
+        ops = GitOperations(repo_path=mock_git_repo)
+        files = ops.get_changed_files(commit="HEAD~1")
+
+        assert len(files) >= 0
+        # commitが引数に含まれている確認
+        call_args = mock_run.call_args[0][0]
+        assert "HEAD~1" in call_args
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_get_file_diff_staged(self, mock_run, mock_git_repo):
+        """ステージ済みファイルdiff取得"""
+        mock_run.return_value = MagicMock(
+            stdout="staged diff",
+            returncode=0
+        )
+
+        ops = GitOperations(repo_path=mock_git_repo)
+        ops.get_file_diff("test.py", staged=True)  # 戻り値は検証不要
+
+        call_args = mock_run.call_args[0][0]
+        assert "--cached" in call_args
+        assert "test.py" in call_args
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_get_blame(self, mock_run, mock_git_repo):
+        """blameテスト"""
+        blame_output = (
+            "abc123 1 1 1\n"
+            "author Test\n"
+            "author-time 1234567890\n"
+            "\tline content\n"
+        )
+        mock_run.return_value = MagicMock(
+            stdout=blame_output,
+            returncode=0
+        )
+
+        ops = GitOperations(repo_path=mock_git_repo)
+        blame = ops.get_blame("test.py")
+
+        assert isinstance(blame, list)
+        assert len(blame) >= 1
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_get_recent_commits_partial(self, mock_run, mock_git_repo):
+        """部分的なコミット情報"""
+        # パイプ区切りが足りない行
+        mock_run.return_value = MagicMock(
+            stdout="sha1|msg1\nsha2|msg2|author2|date2\n",
+            returncode=0
+        )
+
+        ops = GitOperations(repo_path=mock_git_repo)
+        commits = ops.get_recent_commits()
+
+        # 4つの部分がある行のみ処理される
+        assert len(commits) >= 1
+
+    @patch("devbuddy.integrations.git.subprocess.run")
+    def test_install_pre_commit_hook_failure(self, mock_run, mock_git_repo):
+        """pre-commitフックインストール失敗"""
+        mock_run.return_value = MagicMock(
+            stdout=".git/hooks\n",
+            returncode=0
+        )
+
+        ops = GitOperations(repo_path=mock_git_repo)
+
+        # 書き込み時に例外を発生させるようにモック
+        with patch.object(ops, "get_hooks_path") as mock_hooks:
+            mock_path = MagicMock()
+            mock_path.mkdir.side_effect = PermissionError("Permission denied")
+            mock_hooks.return_value = mock_path
+            result = ops.install_pre_commit_hook("#!/bin/sh\necho test")
+            # 失敗時はFalse
+            assert result is False

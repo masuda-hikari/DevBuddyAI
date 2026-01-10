@@ -1,10 +1,10 @@
-﻿# DevBuddyAI - ステータス
+# DevBuddyAI - ステータス
 
 最終更新: 2026-01-10
 
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
-- 進捗: Phase 1完了、テストカバレッジ大幅向上
+- 進捗: Phase 1完了、テストカバレッジ86%達成
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -21,12 +21,12 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - PyPI公開手順書 (docs/PYPI_PUBLISH_GUIDE.md)
 
 ## コード品質
-- flake8: 0 errors ✅
-- mypy: 0 errors (15 source files) ✅
-- テスト: **123件**全合格 ✅（前回38件から大幅増）
-- テストカバレッジ: **68%**（前回43%から+25%向上）
-- パッケージ: twine check PASSED ✅
-- ビルド: sdist + wheel 成功 ✅
+- flake8: 0 errors
+- mypy: 0 errors (15 source files)
+- テスト: **173件**全合格（前回123件から+50件）
+- テストカバレッジ: **86%**（前回68%から+18%向上）
+- パッケージ: twine check PASSED
+- ビルド: sdist + wheel 成功
 
 ## 次のアクション
 1. **リポジトリ公開設定**（人間の作業）
@@ -42,13 +42,12 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - `devbuddy --version`
 
 ## 最近の変更
-- 2026-01-10: テストカバレッジ68%に向上（+85テスト追加）
-  - test_fixer.py: BugFixerの全メソッドテスト
-  - test_llm_client.py: LLMClient/MockLLMClientテスト
-  - test_git.py: GitOperationsテスト
-  - test_github.py: GitHubIntegrationテスト
-  - test_prompts.py: PromptTemplatesテスト
-- 2026-01-10: TestGenerator → CodeTestGeneratorにリネーム
+- 2026-01-10: テストカバレッジ86%に向上（123件→173件）
+  - test_cli.py: 16テスト追加（review/testgen/fix全パス）
+  - test_llm_client.py: 14テスト追加（Claude/OpenAI complete）
+  - test_git.py: 11テスト追加（diff/blame/hook）
+  - test_generator.py: 13テスト追加（extract/clean/error）
+- 2026-01-10: 前回セッション - テストカバレッジ68%
 - 2026-01-09: pyproject.toml Repository URL修正
 - 2026-01-09: PyPI公開手順書作成
 

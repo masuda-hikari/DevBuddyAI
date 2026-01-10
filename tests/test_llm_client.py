@@ -138,3 +138,236 @@ class TestMockLLMClient:
         client = MockLLMClient()
 
         assert isinstance(client, BaseLLMClient)
+
+
+class TestLLMClientComplete:
+    """LLMClient.complete関連のテスト"""
+
+    def test_complete_claude(self):
+        """Claude API呼び出し"""
+        import sys
+        from unittest.mock import MagicMock
+
+        mock_anthropic = MagicMock()
+        mock_content = type("MockContent", (), {"text": "AI response"})()
+        mock_message = type("MockMessage", (), {"content": [mock_content]})()
+        mock_anthropic.Anthropic.return_value.messages.create.return_value = mock_message
+
+        sys.modules["anthropic"] = mock_anthropic
+
+        try:
+            client = LLMClient(api_key="sk-ant-test123")
+            response = client.complete("test prompt")
+            assert response == "AI response"
+        finally:
+            del sys.modules["anthropic"]
+
+    def test_complete_claude_no_text(self):
+        """Claude APIでtextがない場合"""
+        import sys
+        from unittest.mock import MagicMock
+
+        mock_anthropic = MagicMock()
+        mock_content = type("MockContent", (), {})()
+        mock_message = type("MockMessage", (), {"content": [mock_content]})()
+        mock_anthropic.Anthropic.return_value.messages.create.return_value = mock_message
+
+        sys.modules["anthropic"] = mock_anthropic
+
+        try:
+            client = LLMClient(api_key="sk-ant-test123")
+            response = client.complete("test prompt")
+            assert response == ""
+        finally:
+            del sys.modules["anthropic"]
+
+    def test_complete_openai(self):
+        """OpenAI API呼び出し"""
+        import sys
+        from unittest.mock import MagicMock
+
+        mock_openai = MagicMock()
+        mock_message = type("MockMessage", (), {"content": "OpenAI response"})()
+        mock_choice = type("MockChoice", (), {"message": mock_message})()
+        mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
+        mock_openai.OpenAI.return_value.chat.completions.create.return_value = mock_response
+
+        sys.modules["openai"] = mock_openai
+
+        try:
+            client = LLMClient(api_key="sk-proj-test123")
+            response = client.complete("test prompt")
+            assert response == "OpenAI response"
+        finally:
+            del sys.modules["openai"]
+
+    def test_complete_openai_none_content(self):
+        """OpenAI APIでcontentがNoneの場合"""
+        import sys
+        from unittest.mock import MagicMock
+
+        mock_openai = MagicMock()
+        mock_message = type("MockMessage", (), {"content": None})()
+        mock_choice = type("MockChoice", (), {"message": mock_message})()
+        mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
+        mock_openai.OpenAI.return_value.chat.completions.create.return_value = mock_response
+
+        sys.modules["openai"] = mock_openai
+
+        try:
+            client = LLMClient(api_key="sk-proj-test123")
+            response = client.complete("test prompt")
+            assert response == ""
+        finally:
+            del sys.modules["openai"]
+
+    def test_complete_claude_import_error(self):
+        """anthropicパッケージ未インストール"""
+        import sys
+
+        # anthropicモジュールを一時的に削除
+        old_anthropic = sys.modules.get("anthropic")
+        sys.modules["anthropic"] = None
+
+        try:
+            client = LLMClient(api_key="sk-ant-test123")
+            with pytest.raises(ImportError, match="anthropic"):
+                client._complete_claude("test")
+        finally:
+            if old_anthropic:
+                sys.modules["anthropic"] = old_anthropic
+            elif "anthropic" in sys.modules:
+                del sys.modules["anthropic"]
+
+    def test_complete_openai_import_error(self):
+        """openaiパッケージ未インストール"""
+        import sys
+
+        old_openai = sys.modules.get("openai")
+        sys.modules["openai"] = None
+
+        try:
+            client = LLMClient(api_key="sk-proj-test123")
+            with pytest.raises(ImportError, match="openai"):
+                client._complete_openai("test")
+        finally:
+            if old_openai:
+                sys.modules["openai"] = old_openai
+            elif "openai" in sys.modules:
+                del sys.modules["openai"]
+
+
+class TestLLMClientCompleteWithSystem:
+    """LLMClient.complete_with_system関連のテスト"""
+
+    def test_complete_with_system_claude(self):
+        """Claude APIでシステムプロンプト付き"""
+        import sys
+        from unittest.mock import MagicMock
+
+        mock_anthropic = MagicMock()
+        mock_content = type("MockContent", (), {"text": "System response"})()
+        mock_message = type("MockMessage", (), {"content": [mock_content]})()
+        mock_anthropic.Anthropic.return_value.messages.create.return_value = mock_message
+
+        sys.modules["anthropic"] = mock_anthropic
+
+        try:
+            client = LLMClient(api_key="sk-ant-test123")
+            response = client.complete_with_system("system", "user")
+            assert response == "System response"
+        finally:
+            del sys.modules["anthropic"]
+
+    def test_complete_with_system_claude_no_text(self):
+        """Claude APIでシステムプロンプト付きtext属性なし"""
+        import sys
+        from unittest.mock import MagicMock
+
+        mock_anthropic = MagicMock()
+        mock_content = type("MockContent", (), {})()
+        mock_message = type("MockMessage", (), {"content": [mock_content]})()
+        mock_anthropic.Anthropic.return_value.messages.create.return_value = mock_message
+
+        sys.modules["anthropic"] = mock_anthropic
+
+        try:
+            client = LLMClient(api_key="sk-ant-test123")
+            response = client.complete_with_system("system", "user")
+            assert response == ""
+        finally:
+            del sys.modules["anthropic"]
+
+    def test_complete_with_system_openai(self):
+        """OpenAI APIでシステムプロンプト付き"""
+        import sys
+        from unittest.mock import MagicMock
+
+        mock_openai = MagicMock()
+        mock_message = type("MockMessage", (), {"content": "OpenAI sys"})()
+        mock_choice = type("MockChoice", (), {"message": mock_message})()
+        mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
+        mock_openai.OpenAI.return_value.chat.completions.create.return_value = mock_response
+
+        sys.modules["openai"] = mock_openai
+
+        try:
+            client = LLMClient(api_key="sk-proj-test123")
+            response = client.complete_with_system("system", "user")
+            assert response == "OpenAI sys"
+        finally:
+            del sys.modules["openai"]
+
+    def test_complete_with_system_openai_none(self):
+        """OpenAI APIでシステムプロンプト付きcontentがNone"""
+        import sys
+        from unittest.mock import MagicMock
+
+        mock_openai = MagicMock()
+        mock_message = type("MockMessage", (), {"content": None})()
+        mock_choice = type("MockChoice", (), {"message": mock_message})()
+        mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
+        mock_openai.OpenAI.return_value.chat.completions.create.return_value = mock_response
+
+        sys.modules["openai"] = mock_openai
+
+        try:
+            client = LLMClient(api_key="sk-proj-test123")
+            response = client.complete_with_system("system", "user")
+            assert response == ""
+        finally:
+            del sys.modules["openai"]
+
+    def test_complete_with_system_claude_import_error(self):
+        """anthropicパッケージ未インストール（system版）"""
+        import sys
+
+        old_anthropic = sys.modules.get("anthropic")
+        sys.modules["anthropic"] = None
+
+        try:
+            client = LLMClient(api_key="sk-ant-test123")
+            with pytest.raises(ImportError, match="anthropic"):
+                client._complete_claude_with_system("sys", "user")
+        finally:
+            if old_anthropic:
+                sys.modules["anthropic"] = old_anthropic
+            elif "anthropic" in sys.modules:
+                del sys.modules["anthropic"]
+
+    def test_complete_with_system_openai_import_error(self):
+        """openaiパッケージ未インストール（system版）"""
+        import sys
+
+        old_openai = sys.modules.get("openai")
+        sys.modules["openai"] = None
+
+        try:
+            client = LLMClient(api_key="sk-proj-test123")
+            with pytest.raises(ImportError, match="openai"):
+                client._complete_openai_with_system("sys", "user")
+        finally:
+            if old_openai:
+                sys.modules["openai"] = old_openai
+            elif "openai" in sys.modules:
+                del sys.modules["openai"]
