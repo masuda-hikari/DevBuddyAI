@@ -5,6 +5,7 @@
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
 - 進捗: Phase 1-2完了、Phase 3-4進行中
+- **NEW**: GitHub Marketplace公開準備完了
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -39,11 +40,15 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
   - スタックトレース抽出
 - PyPI公開用GitHub Actionワークフロー
 - GitHub Pagesデプロイワークフロー (pages.yml)
-- **PR自動レビューワークフロー強化** - NEW
+- **PR自動レビューワークフロー強化**
   - Python/JS/TS/Rust/Go対応
   - JSON/Markdown出力
   - 既存コメント更新
   - Check Run作成
+- **GitHub Marketplace公開用action.yml** - NEW
+  - 完全なGitHub Action定義（入力/出力パラメータ）
+  - PRコメント自動作成・Check Run作成
+  - README.md更新（使用方法詳細）
 - PyPI公開手順書 (docs/PYPI_PUBLISH_GUIDE.md)
 - ランディングページ (docs/index.html)
 - 法務ページ完備
@@ -68,14 +73,21 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - 詳細: docs/PYPI_PUBLISH_GUIDE.md
 2. **GitHubリリースタグv0.1.0作成**
    - タグ作成 → GitHub Actions自動公開
+   - **Marketplace公開**: リリース時に「Publish this Action to GitHub Marketplace」をチェック
 3. **PyPI公開後の動作確認**
    - `pip install devbuddy-ai`
    - `devbuddy --version`
 4. **GitHub Pages有効化**（人間の作業）
    - リポジトリSettings → Pages → Source: GitHub Actions
    - ワークフロー: pages.yml
+5. **GitHub Marketplace公開**（人間の作業）
+   - リリースv0.1.0作成時に自動的にMarketplaceオプションが表示される
+   - または: Actions → Publish this action to the Marketplace
 
 ## 最近の変更
+- 2026-01-11: GitHub Marketplace公開準備
+  - action.yml作成（完全なGitHub Action定義）
+  - README.md更新（Marketplace使用方法詳細）
 - 2026-01-11: バグ修正提案機能強化
   - 複数言語対応（Python/JS/TS/Rust/Go）
   - 自己検証ループ（suggest_and_verify）
