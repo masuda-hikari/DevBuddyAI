@@ -3,7 +3,6 @@ PythonAnalyzerのテスト
 """
 
 import pytest
-from pathlib import Path
 
 from devbuddy.analyzers.python_analyzer import PythonAnalyzer, AnalysisConfig
 

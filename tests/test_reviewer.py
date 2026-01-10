@@ -6,7 +6,6 @@ import pytest
 from pathlib import Path
 
 from devbuddy.core.reviewer import CodeReviewer, Issue, ReviewResult
-from devbuddy.llm.client import MockLLMClient
 
 
 class TestCodeReviewer:
