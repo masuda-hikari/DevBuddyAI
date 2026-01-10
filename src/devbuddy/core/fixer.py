@@ -13,6 +13,7 @@ from typing import Optional
 
 from devbuddy.llm.client import LLMClient
 from devbuddy.llm.prompts import PromptTemplates
+from devbuddy.core.licensing import LicenseManager, UsageLimitError
 
 
 @dataclass
@@ -80,10 +81,24 @@ class BugFixer:
         },
     }
 
-    def __init__(self, client: LLMClient):
+    def __init__(
+        self,
+        client: LLMClient,
+        license_manager: Optional[LicenseManager] = None,
+        skip_license_check: bool = False,
+    ):
         self.client = client
         self.prompts = PromptTemplates()
         self.max_retry = 3
+        self._license_manager = license_manager
+        self._skip_license_check = skip_license_check
+
+    @property
+    def license_manager(self) -> LicenseManager:
+        """ライセンスマネージャーを取得（遅延初期化）"""
+        if self._license_manager is None:
+            self._license_manager = LicenseManager()
+        return self._license_manager
 
     def detect_language(self, file_path: Path) -> str:
         """ファイル拡張子から言語を検出"""
@@ -118,6 +133,13 @@ class BugFixer:
         Returns:
             FixResult: 修正提案
         """
+        # ライセンスチェック
+        if not self._skip_license_check:
+            try:
+                self.license_manager.check_fix_limit()
+            except UsageLimitError as e:
+                return FixResult(success=False, error=str(e))
+
         # 言語を検出
         lang = language or self.detect_language(test_path)
 
@@ -173,6 +195,10 @@ class BugFixer:
             suggestions = self._parse_fix_response(response, path_for_parse)
         except Exception as e:
             return FixResult(success=False, error=str(e))
+
+        # 利用量を記録
+        if not self._skip_license_check:
+            self.license_manager.record_fix()
 
         return FixResult(success=True, suggestions=suggestions)
 

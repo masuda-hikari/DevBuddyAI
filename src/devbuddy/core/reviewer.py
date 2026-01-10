@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Optional, TYPE_CHECKING
 
 from devbuddy.core.models import Issue, ReviewResult
+from devbuddy.core.licensing import LicenseManager, UsageLimitError
 from devbuddy.llm.client import LLMClient
 from devbuddy.llm.prompts import PromptTemplates
 
@@ -18,10 +19,24 @@ if TYPE_CHECKING:
 class CodeReviewer:
     """AIコードレビューエンジン"""
 
-    def __init__(self, client: LLMClient):
+    def __init__(
+        self,
+        client: LLMClient,
+        license_manager: Optional[LicenseManager] = None,
+        skip_license_check: bool = False,
+    ):
         self.client = client
         self._analyzer: Optional["PythonAnalyzer"] = None
         self.prompts = PromptTemplates()
+        self._license_manager = license_manager
+        self._skip_license_check = skip_license_check
+
+    @property
+    def license_manager(self) -> LicenseManager:
+        """ライセンスマネージャーを取得（遅延初期化）"""
+        if self._license_manager is None:
+            self._license_manager = LicenseManager()
+        return self._license_manager
 
     @property
     def analyzer(self) -> Any:
@@ -55,6 +70,18 @@ class CodeReviewer:
                 error=f"Failed to read file: {e}",
             )
 
+        # ライセンスチェック
+        if not self._skip_license_check:
+            try:
+                file_lines = len(code.splitlines())
+                self.license_manager.check_review_limit(file_lines)
+            except UsageLimitError as e:
+                return ReviewResult(
+                    file_path=file_path,
+                    success=False,
+                    error=str(e),
+                )
+
         # 静的解析を実行
         static_issues = self.analyzer.analyze(code, file_path)
 
@@ -75,6 +102,10 @@ class CodeReviewer:
         # 結果をマージ
         all_issues = static_issues + ai_issues
         filtered_issues = self._filter_by_severity(all_issues, severity)
+
+        # 利用量を記録
+        if not self._skip_license_check:
+            self.license_manager.record_review()
 
         return ReviewResult(
             file_path=file_path,

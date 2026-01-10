@@ -19,6 +19,7 @@ from devbuddy.core.reviewer import CodeReviewer
 from devbuddy.core.generator import CodeTestGenerator
 from devbuddy.core.fixer import BugFixer
 from devbuddy.core.formatters import get_formatter
+from devbuddy.core.licensing import LicenseManager, LicenseError
 from devbuddy.llm.client import LLMClient
 
 
@@ -646,6 +647,126 @@ def auth(token: str) -> None:
     click.echo("Authenticating...")
     click.echo(click.style("Authentication successful!", fg="green"))
     click.echo("Your token has been saved.")
+
+
+@cli.group()
+def license() -> None:
+    """ライセンス管理コマンド
+
+    ライセンスのアクティベート、確認、利用状況の表示を行います。
+    """
+    pass
+
+
+@license.command("activate")
+@click.option(
+    "--key", "-k", prompt="License Key", help="ライセンスキー（DB-PRO-xxx形式）"
+)
+@click.option(
+    "--email", "-e", prompt="Email", help="登録メールアドレス"
+)
+def license_activate(key: str, email: str) -> None:
+    """ライセンスをアクティベート
+
+    Examples:
+        devbuddy license activate --key DB-PRO-abc123 --email user@example.com
+    """
+    manager = LicenseManager()
+
+    try:
+        license_info = manager.activate(key, email)
+        click.echo(click.style("✓ License activated!", fg="green", bold=True))
+        click.echo()
+        click.echo(f"  Plan: {license_info.plan.value.upper()}")
+        click.echo(f"  Email: {license_info.email}")
+
+        limits = license_info.get_limits()
+        click.echo()
+        click.echo("  Features enabled:")
+        click.echo(f"    - Reviews/month: {_format_limit(limits.reviews_per_month)}")
+        click.echo(f"    - Max file lines: {_format_limit(limits.max_file_lines)}")
+        click.echo(f"    - Private repos: {'✓' if limits.private_repos else '✗'}")
+        click.echo(
+            f"    - GitHub integration: {'✓' if limits.github_integration else '✗'}"
+        )
+    except LicenseError as e:
+        click.echo(click.style(f"✗ Activation failed: {e}", fg="red"))
+
+
+@license.command("status")
+def license_status() -> None:
+    """ライセンス状態と利用状況を表示"""
+    manager = LicenseManager()
+    license_info = manager.get_license()
+
+    click.echo(click.style("DevBuddyAI License Status", fg="cyan", bold=True))
+    click.echo("=" * 40)
+
+    if license_info and license_info.is_valid and not license_info.is_expired():
+        plan_styled = click.style(
+            license_info.plan.value.upper(), fg='green', bold=True
+        )
+        click.echo(f"Plan: {plan_styled}")
+        click.echo(f"Email: {license_info.email}")
+        if license_info.expires_at:
+            click.echo(f"Expires: {license_info.expires_at}")
+    else:
+        click.echo(
+            f"Plan: {click.style('FREE', fg='yellow', bold=True)}"
+        )
+        click.echo("(No active license)")
+
+    # 利用状況
+    click.echo()
+    summary = manager.get_usage_summary()
+    click.echo("Usage this month:")
+    click.echo(f"  Reviews: {summary['reviews']}")
+    click.echo(f"  Test generations: {summary['testgens']}")
+    click.echo(f"  Fix suggestions: {summary['fixes']}")
+
+    # 制限
+    click.echo()
+    click.echo("Limits:")
+    click.echo(f"  Max file lines: {summary['max_file_lines']}")
+
+    # 機能
+    click.echo()
+    click.echo("Features:")
+    features = summary['features']
+    for feature, enabled in features.items():
+        status = click.style("✓", fg="green") if enabled else click.style(
+            "✗", fg="red"
+        )
+        feature_name = feature.replace("_", " ").title()
+        click.echo(f"  {status} {feature_name}")
+
+
+@license.command("deactivate")
+@click.confirmation_option(prompt="Are you sure you want to deactivate?")
+def license_deactivate() -> None:
+    """ライセンスを無効化"""
+    manager = LicenseManager()
+    manager.deactivate()
+    click.echo(click.style("License deactivated.", fg="yellow"))
+    click.echo("You are now using the FREE plan.")
+
+
+@license.command("usage")
+def license_usage() -> None:
+    """今月の利用状況を表示"""
+    manager = LicenseManager()
+    summary = manager.get_usage_summary()
+
+    click.echo(click.style(f"Usage for {summary['month']}", fg="cyan", bold=True))
+    click.echo("-" * 30)
+    click.echo(f"Reviews:          {summary['reviews']}")
+    click.echo(f"Test generations: {summary['testgens']}")
+    click.echo(f"Fix suggestions:  {summary['fixes']}")
+
+
+def _format_limit(value: int) -> str:
+    """制限値をフォーマット"""
+    return "unlimited" if value == -1 else str(value)
 
 
 def main() -> None:
