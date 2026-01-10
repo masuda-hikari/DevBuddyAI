@@ -1,0 +1,267 @@
+name: 'DevBuddyAI Code Review'
+description: 'AI-powered code review that automatically reviews your pull requests for bugs, style issues, and potential improvements'
+author: 'masuda-hikari'
+
+branding:
+  icon: 'code'
+  color: 'blue'
+
+inputs:
+  api_key:
+    description: 'API key for DevBuddyAI (Claude or OpenAI)'
+    required: true
+  model:
+    description: 'AI model to use (claude-3-sonnet, claude-3-opus, gpt-4, gpt-3.5-turbo)'
+    required: false
+    default: 'claude-3-sonnet'
+  severity:
+    description: 'Minimum severity level to report (low, medium, high)'
+    required: false
+    default: 'medium'
+  languages:
+    description: 'Languages to review (comma-separated: python,javascript,typescript,rust,go or "auto")'
+    required: false
+    default: 'auto'
+  review_mode:
+    description: 'Review mode: "diff" (only changed lines) or "full" (entire files)'
+    required: false
+    default: 'diff'
+  fail_on_issues:
+    description: 'Fail the check if issues are found (true/false)'
+    required: false
+    default: 'false'
+  post_comment:
+    description: 'Post review results as PR comment (true/false)'
+    required: false
+    default: 'true'
+  ignore_patterns:
+    description: 'Glob patterns to ignore (comma-separated)'
+    required: false
+    default: ''
+  config_file:
+    description: 'Path to .devbuddy.yaml config file'
+    required: false
+    default: '.devbuddy.yaml'
+
+outputs:
+  issues_count:
+    description: 'Number of issues found'
+  bugs_count:
+    description: 'Number of bugs found'
+  warnings_count:
+    description: 'Number of warnings found'
+  style_count:
+    description: 'Number of style issues found'
+  review_summary:
+    description: 'Summary of the review'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install DevBuddyAI
+      shell: bash
+      run: pip install devbuddy-ai
+
+    - name: Get changed files
+      id: changed-files
+      shell: bash
+      run: |
+        # PR用のdiff取得
+        if [ -n "${{ github.event.pull_request.base.sha }}" ]; then
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.sha }}"
+        else
+          # Push用: 直前のコミットとの差分
+          BASE_SHA="HEAD~1"
+          HEAD_SHA="HEAD"
+        fi
+
+        # 言語別にファイルを取得
+        PY_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA 2>/dev/null | grep '\.py$' | tr '\n' ' ' || true)
+        JS_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA 2>/dev/null | grep -E '\.(js|jsx|ts|tsx)$' | tr '\n' ' ' || true)
+        RS_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA 2>/dev/null | grep '\.rs$' | tr '\n' ' ' || true)
+        GO_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA 2>/dev/null | grep '\.go$' | tr '\n' ' ' || true)
+
+        echo "py_files=$PY_FILES" >> $GITHUB_OUTPUT
+        echo "js_files=$JS_FILES" >> $GITHUB_OUTPUT
+        echo "rs_files=$RS_FILES" >> $GITHUB_OUTPUT
+        echo "go_files=$GO_FILES" >> $GITHUB_OUTPUT
+
+        # ファイルが存在するか確認
+        ALL_FILES="$PY_FILES$JS_FILES$RS_FILES$GO_FILES"
+        if [ -n "$(echo $ALL_FILES | tr -d ' ')" ]; then
+          echo "has_files=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_files=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Run DevBuddyAI Review
+      if: steps.changed-files.outputs.has_files == 'true'
+      shell: bash
+      env:
+        DEVBUDDY_API_KEY: ${{ inputs.api_key }}
+        DEVBUDDY_MODEL: ${{ inputs.model }}
+      run: |
+        # レビュー対象ファイルを結合
+        FILES=""
+
+        if [ "${{ inputs.languages }}" = "auto" ]; then
+          FILES="${{ steps.changed-files.outputs.py_files }}${{ steps.changed-files.outputs.js_files }}${{ steps.changed-files.outputs.rs_files }}${{ steps.changed-files.outputs.go_files }}"
+        else
+          # 指定言語のみ
+          IFS=',' read -ra LANGS <<< "${{ inputs.languages }}"
+          for lang in "${LANGS[@]}"; do
+            case "$lang" in
+              python) FILES="$FILES ${{ steps.changed-files.outputs.py_files }}" ;;
+              javascript|typescript) FILES="$FILES ${{ steps.changed-files.outputs.js_files }}" ;;
+              rust) FILES="$FILES ${{ steps.changed-files.outputs.rs_files }}" ;;
+              go) FILES="$FILES ${{ steps.changed-files.outputs.go_files }}" ;;
+            esac
+          done
+        fi
+
+        # ファイルが存在しない場合はスキップ
+        if [ -z "$(echo $FILES | tr -d ' ')" ]; then
+          echo "No files to review for specified languages"
+          exit 0
+        fi
+
+        # レビュー実行
+        devbuddy review $FILES \
+          --severity ${{ inputs.severity }} \
+          --format json \
+          -o review_results.json || true
+
+        # Markdown出力も生成
+        devbuddy review $FILES \
+          --severity ${{ inputs.severity }} \
+          --format markdown \
+          -o review_results.md || true
+
+        # カウント集計
+        if [ -f review_results.json ]; then
+          ISSUES=$(cat review_results.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d.get('issues', [])))" 2>/dev/null || echo "0")
+          BUGS=$(cat review_results.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(len([i for i in d.get('issues', []) if i.get('severity')=='error']))" 2>/dev/null || echo "0")
+          WARNINGS=$(cat review_results.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(len([i for i in d.get('issues', []) if i.get('severity')=='warning']))" 2>/dev/null || echo "0")
+          STYLE=$(cat review_results.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(len([i for i in d.get('issues', []) if i.get('severity')=='info']))" 2>/dev/null || echo "0")
+        else
+          ISSUES=0
+          BUGS=0
+          WARNINGS=0
+          STYLE=0
+        fi
+
+        echo "issues_count=$ISSUES" >> $GITHUB_OUTPUT
+        echo "bugs_count=$BUGS" >> $GITHUB_OUTPUT
+        echo "warnings_count=$WARNINGS" >> $GITHUB_OUTPUT
+        echo "style_count=$STYLE" >> $GITHUB_OUTPUT
+        echo "review_summary=Found $ISSUES issues ($BUGS bugs, $WARNINGS warnings, $STYLE style)" >> $GITHUB_OUTPUT
+
+    - name: Post PR Comment
+      if: steps.changed-files.outputs.has_files == 'true' && inputs.post_comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+
+          // Markdown出力を読み込み
+          let output = '';
+          try {
+            output = fs.readFileSync('review_results.md', 'utf8');
+          } catch (e) {
+            console.log('No review output found');
+            return;
+          }
+
+          if (!output || output.includes('No issues found') || output.trim() === '') {
+            console.log('No issues found, skipping comment');
+            return;
+          }
+
+          // 既存のDevBuddyAIコメントを検索
+          const comments = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number
+          });
+
+          const existingComment = comments.data.find(c =>
+            c.body.includes('DevBuddyAI Code Review') &&
+            c.user.login === 'github-actions[bot]'
+          );
+
+          const body = `## 🤖 DevBuddyAI Code Review\n\n${output}\n\n---\n*Powered by [DevBuddyAI](https://github.com/masuda-hikari/DevBuddyAI)*`;
+
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+          }
+
+    - name: Create Check Run
+      if: steps.changed-files.outputs.has_files == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+
+          let summary = 'No issues found';
+          let conclusion = 'success';
+
+          try {
+            const output = fs.readFileSync('review_results.md', 'utf8');
+            if (output && !output.includes('No issues found')) {
+              const issueCount = (output.match(/\*\*\[/g) || []).length;
+              if (issueCount > 0) {
+                summary = `Found ${issueCount} issue(s)`;
+                conclusion = '${{ inputs.fail_on_issues }}' === 'true' ? 'failure' : 'neutral';
+              }
+            }
+          } catch (e) {
+            // ファイルなし
+          }
+
+          await github.rest.checks.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: 'DevBuddyAI Review',
+            head_sha: context.sha,
+            status: 'completed',
+            conclusion: conclusion,
+            output: {
+              title: 'DevBuddyAI Code Review',
+              summary: summary
+            }
+          });
+
+    - name: Fail if issues found
+      if: steps.changed-files.outputs.has_files == 'true' && inputs.fail_on_issues == 'true'
+      shell: bash
+      run: |
+        if [ -f review_results.json ]; then
+          ISSUES=$(cat review_results.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d.get('issues', [])))" 2>/dev/null || echo "0")
+          if [ "$ISSUES" -gt 0 ]; then
+            echo "❌ DevBuddyAI found $ISSUES issue(s). Failing build."
+            exit 1
+          fi
+        fi
+
+    - name: No files to review
+      if: steps.changed-files.outputs.has_files == 'false'
+      shell: bash
+      run: echo "✅ No supported files to review"

@@ -163,10 +163,11 @@ Examples:
   devbuddy fix tests/test_api.py    # Suggest fixes for failing tests
 ```
 
-## GitHub Action
+## GitHub Action (Marketplace)
 
-Add to your `.github/workflows/devbuddy.yml`:
+DevBuddyAI is available on [GitHub Marketplace](https://github.com/marketplace/actions/devbuddyai-code-review). Add to your `.github/workflows/devbuddy.yml`:
 
+### Basic Usage
 ```yaml
 name: DevBuddyAI Review
 
@@ -175,13 +176,54 @@ on: [pull_request]
 jobs:
   review:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
-      - uses: devbuddy/action@v1
+        with:
+          fetch-depth: 0
+      - uses: masuda-hikari/DevBuddyAI@v1
         with:
           api_key: ${{ secrets.DEVBUDDY_API_KEY }}
-          review_mode: "diff"
 ```
+
+### Advanced Configuration
+```yaml
+- uses: masuda-hikari/DevBuddyAI@v1
+  with:
+    api_key: ${{ secrets.DEVBUDDY_API_KEY }}
+    model: 'claude-3-sonnet'        # claude-3-opus, gpt-4, gpt-3.5-turbo
+    severity: 'medium'              # low, medium, high
+    languages: 'auto'               # auto, python, javascript, typescript, rust, go
+    review_mode: 'diff'             # diff, full
+    fail_on_issues: 'false'         # true to block PRs with issues
+    post_comment: 'true'            # true to post review as PR comment
+    ignore_patterns: '*.test.py'    # comma-separated patterns to ignore
+```
+
+### Action Inputs
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `api_key` | API key for AI provider (required) | - |
+| `model` | AI model to use | `claude-3-sonnet` |
+| `severity` | Minimum severity level | `medium` |
+| `languages` | Languages to review | `auto` |
+| `review_mode` | Review changed lines or full files | `diff` |
+| `fail_on_issues` | Fail check if issues found | `false` |
+| `post_comment` | Post results as PR comment | `true` |
+
+### Action Outputs
+
+| Output | Description |
+|--------|-------------|
+| `issues_count` | Total number of issues found |
+| `bugs_count` | Number of bugs found |
+| `warnings_count` | Number of warnings found |
+| `style_count` | Number of style issues found |
+| `review_summary` | Summary text of the review |
 
 ## Contributing
 
