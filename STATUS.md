@@ -4,7 +4,7 @@
 
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
-- 進捗: Phase 1完了、法務対応完了、Rust/Go Analyzer実装完了
+- 進捗: Phase 1完了、法務対応完了、Rust/Go Analyzer実装完了、ドキュメント整合性修正完了
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -14,8 +14,8 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - コアモジュール構造 (core/, llm/, analyzers/, integrations/)
 - Python静的解析器 (python_analyzer.py)
 - JavaScript/TypeScript静的解析器 (js_analyzer.py)
-- **Rust静的解析器 (rust_analyzer.py)**
-- **Go静的解析器 (go_analyzer.py) - NEW**
+- Rust静的解析器 (rust_analyzer.py)
+- Go静的解析器 (go_analyzer.py)
 - コードレビューエンジン (reviewer.py)
 - テスト生成エンジン (generator.py → CodeTestGenerator)
 - LLMクライアント基盤 (client.py, prompts.py)
@@ -23,7 +23,7 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - PyPI公開用GitHub Actionワークフロー
 - PyPI公開手順書 (docs/PYPI_PUBLISH_GUIDE.md)
 - ランディングページ (docs/index.html)
-- **法務ページ完備 - NEW**
+- 法務ページ完備
   - プライバシーポリシー (docs/privacy.html)
   - 利用規約 (docs/terms.html)
   - 特定商取引法に基づく表記 (docs/legal.html)
@@ -31,7 +31,7 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 ## コード品質
 - flake8: 0 errors
 - mypy: 0 errors (18 source files)
-- テスト: **292件**全合格（前回255件から+37件）
+- テスト: **292件**全合格
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -48,6 +48,9 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - ランディングページ・法務ページ公開
 
 ## 最近の変更
+- 2026-01-10: ドキュメント整合性修正
+  - README.mdの対応言語表を更新（Rust/Go: Coming Soon → Full）
+  - テストファイルのflake8エラー修正
 - 2026-01-10: Go Analyzer実装
   - パターンベース解析（panic, recover, fmt.Print, unsafe等）
   - go vet / staticcheck / golangci-lint連携
@@ -62,7 +65,6 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
   - clippy/cargo check連携
   - 関数/構造体/列挙型/トレイト/impl解析
   - テスト40件追加
-- 2026-01-10: テストカバレッジ向上（215件→255件）
 
 ## 収益化リンク
 SaaS/API課金モデル → Pro: $19/月、Team: $99/月
