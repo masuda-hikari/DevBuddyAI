@@ -947,6 +947,129 @@ def billing_cancel() -> None:
     click.echo("  devbuddy billing upgrade pro")
 
 
+@cli.group()
+def server() -> None:
+    """Webhookサーバー管理
+
+    Stripe Webhookを受け付けるサーバーを起動・管理します。
+    """
+    pass
+
+
+@server.command("start")
+@click.option(
+    "--host", "-h",
+    default="0.0.0.0",
+    help="バインドするホスト（default: 0.0.0.0）"
+)
+@click.option(
+    "--port", "-p",
+    default=8000,
+    type=int,
+    help="リッスンするポート（default: 8000）"
+)
+@click.option(
+    "--log-level",
+    type=click.Choice(["debug", "info", "warning", "error"]),
+    default="info",
+    help="ログレベル（default: info）"
+)
+def server_start(host: str, port: int, log_level: str) -> None:
+    """Webhookサーバーを起動
+
+    Stripe決済のWebhookを受け付けるサーバーを起動します。
+
+    Examples:
+        devbuddy server start
+        devbuddy server start --port 9000
+        devbuddy server start --host 127.0.0.1 --log-level debug
+    """
+    try:
+        from devbuddy.server.webhook import WebhookConfig, WebhookServer
+    except ImportError as e:
+        click.echo(click.style("Error: ", fg="red") + str(e))
+        click.echo("サーバー機能を使用するには、以下をインストールしてください:")
+        click.echo("  pip install devbuddy-ai[server]")
+        return
+
+    click.echo(click.style("DevBuddyAI Webhook Server", fg="cyan", bold=True))
+    click.echo("=" * 40)
+
+    # 環境変数チェック
+    import os
+    stripe_key = os.environ.get("STRIPE_API_KEY", "")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+
+    if not stripe_key:
+        click.echo(click.style("Warning: ", fg="yellow") + "STRIPE_API_KEY not set")
+    if not webhook_secret:
+        click.echo(
+            click.style("Warning: ", fg="yellow") + "STRIPE_WEBHOOK_SECRET not set"
+        )
+
+    click.echo()
+    click.echo(f"Starting server on {host}:{port}...")
+    click.echo(f"Log level: {log_level}")
+    click.echo()
+    click.echo("Endpoints:")
+    click.echo(f"  Health:    http://{host}:{port}/health")
+    click.echo(f"  Prices:    http://{host}:{port}/api/v1/prices")
+    click.echo(f"  Checkout:  http://{host}:{port}/api/v1/checkout/create")
+    click.echo(f"  Webhook:   http://{host}:{port}/api/v1/webhook/stripe")
+    click.echo(f"  API Docs:  http://{host}:{port}/docs")
+    click.echo()
+    click.echo("Press Ctrl+C to stop the server.")
+    click.echo()
+
+    config = WebhookConfig(
+        stripe_api_key=stripe_key,
+        stripe_webhook_secret=webhook_secret,
+        host=host,
+        port=port,
+        log_level=log_level.upper(),
+    )
+
+    try:
+        server_instance = WebhookServer(config)
+        server_instance.run()
+    except KeyboardInterrupt:
+        click.echo()
+        click.echo(click.style("Server stopped.", fg="yellow"))
+    except Exception as e:
+        click.echo(click.style(f"Server error: {e}", fg="red"))
+
+
+@server.command("info")
+def server_info() -> None:
+    """サーバー設定情報を表示"""
+    import os
+
+    click.echo(click.style("Server Configuration", fg="cyan", bold=True))
+    click.echo("=" * 40)
+
+    stripe_key = os.environ.get("STRIPE_API_KEY", "")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+
+    # Stripe API Key
+    if stripe_key:
+        masked = stripe_key[:7] + "..." + stripe_key[-4:]
+        click.echo(f"STRIPE_API_KEY: {click.style(masked, fg='green')}")
+    else:
+        click.echo(f"STRIPE_API_KEY: {click.style('NOT SET', fg='red')}")
+
+    # Webhook Secret
+    if webhook_secret:
+        masked = webhook_secret[:7] + "..." + webhook_secret[-4:]
+        click.echo(f"STRIPE_WEBHOOK_SECRET: {click.style(masked, fg='green')}")
+    else:
+        click.echo(f"STRIPE_WEBHOOK_SECRET: {click.style('NOT SET', fg='red')}")
+
+    click.echo()
+    click.echo("Required environment variables:")
+    click.echo("  export STRIPE_API_KEY=sk_test_xxx")
+    click.echo("  export STRIPE_WEBHOOK_SECRET=whsec_xxx")
+
+
 def main() -> None:
     """エントリポイント"""
     cli()
