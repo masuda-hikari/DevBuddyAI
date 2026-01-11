@@ -25,7 +25,8 @@ def test_add_negative():
     assert add(-1, -1) == -2
 """
         })
-        return CodeTestGenerator(client=client)
+        # テスト時はライセンスチェックをスキップ
+        return CodeTestGenerator(client=client, skip_license_check=True)
 
     def test_generate_tests_success(self, generator, temp_python_file):
         """テスト生成成功"""
@@ -162,7 +163,8 @@ class TestCodeTestGeneratorExtended:
         client = MockLLMClient(responses={
             "test": "def test_example(): pass",
         })
-        return CodeTestGenerator(client=client)
+        # テスト時はライセンスチェックをスキップ
+        return CodeTestGenerator(client=client, skip_license_check=True)
 
     def test_extract_functions_syntax_error(self, generator):
         """構文エラーのコードから抽出"""
@@ -217,7 +219,8 @@ def test_example():
         mock_client = MagicMock()
         mock_client.complete.side_effect = Exception("API Error")
 
-        generator = CodeTestGenerator(client=mock_client)
+        # テスト時はライセンスチェックをスキップ
+        generator = CodeTestGenerator(client=mock_client, skip_license_check=True)
 
         source_file = tmp_path / "test.py"
         source_file.write_text("def foo(): pass")
@@ -234,7 +237,8 @@ def test_example():
 def test_two(): pass
 def test_three(): pass"""
         })
-        generator = CodeTestGenerator(client=client)
+        # テスト時はライセンスチェックをスキップ
+        generator = CodeTestGenerator(client=client, skip_license_check=True)
 
         source_file = tmp_path / "calc.py"
         source_file.write_text("def add(a, b): return a + b")
@@ -248,7 +252,8 @@ def test_three(): pass"""
         client = MockLLMClient(responses={
             "def": "def test_add(): pass"
         })
-        generator = CodeTestGenerator(client=client)
+        # テスト時はライセンスチェックをスキップ
+        generator = CodeTestGenerator(client=client, skip_license_check=True)
 
         source_file = tmp_path / "math_ops.py"
         source_file.write_text("""

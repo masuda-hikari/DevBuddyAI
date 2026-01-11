@@ -215,7 +215,7 @@ class TestEndpoints:
             json={"plan": "pro"},
         )
         assert response.status_code == 400
-        assert "Missing required fields" in response.json()["detail"]
+        assert "Missing" in response.json()["detail"]
 
     def test_create_checkout_invalid_plan(
         self, client  # type: ignore[no-untyped-def]

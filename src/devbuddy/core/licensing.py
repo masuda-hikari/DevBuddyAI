@@ -107,7 +107,8 @@ class License:
         """有効期限切れかどうか"""
         if not self.expires_at:
             return False
-        expires = datetime.fromisoformat(self.expires_at.replace("Z", "+00:00"))
+        expires_str = self.expires_at.replace("Z", "+00:00")
+        expires = datetime.fromisoformat(expires_str)
         return datetime.now(timezone.utc) > expires
 
     def get_limits(self) -> PlanLimits:
@@ -226,7 +227,9 @@ class LicenseManager:
     def get_plan(self) -> Plan:
         """現在のプランを取得（ライセンスがなければFREE）"""
         license_info = self.get_license()
-        if license_info and license_info.is_valid and not license_info.is_expired():
+        is_active = (license_info and license_info.is_valid
+                     and not license_info.is_expired())
+        if is_active:
             return license_info.plan
         return Plan.FREE
 

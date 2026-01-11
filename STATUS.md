@@ -97,6 +97,15 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - または: Actions → Publish this action to the Marketplace
 
 ## 最近の変更
+- 2026-01-11: **クラウドデプロイ設定追加**
+  - Dockerfile新規作成（マルチステージビルド・本番最適化）
+  - .dockerignore新規作成
+  - docker-compose.yml新規作成（開発・テスト用）
+  - railway.toml / render.yaml / fly.toml 新規作成
+  - docs/DEPLOY_GUIDE.md新規作成（デプロイ手順書）
+  - テストファイル修正（ライセンスチェックスキップ対応）
+  - flake8行長エラー18件修正
+  - テスト: 436件全合格
 - 2026-01-11: **FastAPI Webhookサーバー追加**
   - server/webhook.py新規作成（WebhookServer/create_app）
   - CLI: server start/info コマンド追加
@@ -131,7 +140,7 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 ## 収益化リンク
 SaaS/API課金モデル → Pro: ¥1,980/月、Team: ¥9,800/月
 目標: 1000万円達成に向けたPyPI公開・ユーザー獲得開始
-**NEW**: Webhookサーバー完了 → デプロイ準備完了
+**NEW**: クラウドデプロイ設定完了 → 本番環境デプロイ可能
 
 ## プラン別制限
 | プラン | レビュー/月 | ファイル行数 | テスト生成/月 | 修正提案/月 |

@@ -385,10 +385,12 @@ class BugFixer:
         desc_lower = description.lower()
 
         # セキュリティは最優先
-        if any(w in desc_lower for w in ["security", "injection", "xss", "csrf"]):
+        security_words = ["security", "injection", "xss", "csrf"]
+        if any(w in desc_lower for w in security_words):
             return "security"
         # パフォーマンスは次に優先
-        if any(w in desc_lower for w in ["performance", "optimize", "slow", "fast"]):
+        perf_words = ["performance", "optimize", "slow", "fast"]
+        if any(w in desc_lower for w in perf_words):
             return "performance"
         # スタイル
         if any(w in desc_lower for w in ["style", "format", "naming"]):

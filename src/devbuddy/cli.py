@@ -689,12 +689,14 @@ def license_activate(key: str, email: str) -> None:
         limits = license_info.get_limits()
         click.echo()
         click.echo("  Features enabled:")
-        click.echo(f"    - Reviews/month: {_format_limit(limits.reviews_per_month)}")
-        click.echo(f"    - Max file lines: {_format_limit(limits.max_file_lines)}")
-        click.echo(f"    - Private repos: {'✓' if limits.private_repos else '✗'}")
-        click.echo(
-            f"    - GitHub integration: {'✓' if limits.github_integration else '✗'}"
-        )
+        reviews_limit = _format_limit(limits.reviews_per_month)
+        click.echo(f"    - Reviews/month: {reviews_limit}")
+        lines_limit = _format_limit(limits.max_file_lines)
+        click.echo(f"    - Max file lines: {lines_limit}")
+        private_check = '✓' if limits.private_repos else '✗'
+        click.echo(f"    - Private repos: {private_check}")
+        github_check = '✓' if limits.github_integration else '✗'
+        click.echo(f"    - GitHub integration: {github_check}")
     except LicenseError as e:
         click.echo(click.style(f"✗ Activation failed: {e}", fg="red"))
 
@@ -708,7 +710,9 @@ def license_status() -> None:
     click.echo(click.style("DevBuddyAI License Status", fg="cyan", bold=True))
     click.echo("=" * 40)
 
-    if license_info and license_info.is_valid and not license_info.is_expired():
+    is_active = (license_info and license_info.is_valid
+                 and not license_info.is_expired())
+    if is_active:
         plan_styled = click.style(
             license_info.plan.value.upper(), fg='green', bold=True
         )
@@ -763,7 +767,8 @@ def license_usage() -> None:
     manager = LicenseManager()
     summary = manager.get_usage_summary()
 
-    click.echo(click.style(f"Usage for {summary['month']}", fg="cyan", bold=True))
+    month_label = f"Usage for {summary['month']}"
+    click.echo(click.style(month_label, fg="cyan", bold=True))
     click.echo("-" * 30)
     click.echo(f"Reviews:          {summary['reviews']}")
     click.echo(f"Test generations: {summary['testgens']}")
@@ -910,7 +915,9 @@ def billing_status() -> None:
             click.echo("  devbuddy billing upgrade pro")
             click.echo("  devbuddy billing upgrade team")
         else:
-            plan_styled = click.style(plan.value.upper(), fg='green', bold=True)
+            plan_styled = click.style(
+                plan.value.upper(), fg='green', bold=True
+            )
             click.echo(f"Current Plan: {plan_styled}")
 
             price_info = get_price_info(plan)
@@ -1000,12 +1007,11 @@ def server_start(host: str, port: int, log_level: str) -> None:
     stripe_key = os.environ.get("STRIPE_API_KEY", "")
     webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
+    warning_style = click.style("Warning: ", fg="yellow")
     if not stripe_key:
-        click.echo(click.style("Warning: ", fg="yellow") + "STRIPE_API_KEY not set")
+        click.echo(warning_style + "STRIPE_API_KEY not set")
     if not webhook_secret:
-        click.echo(
-            click.style("Warning: ", fg="yellow") + "STRIPE_WEBHOOK_SECRET not set"
-        )
+        click.echo(warning_style + "STRIPE_WEBHOOK_SECRET not set")
 
     click.echo()
     click.echo(f"Starting server on {host}:{port}...")
@@ -1060,9 +1066,11 @@ def server_info() -> None:
     # Webhook Secret
     if webhook_secret:
         masked = webhook_secret[:7] + "..." + webhook_secret[-4:]
-        click.echo(f"STRIPE_WEBHOOK_SECRET: {click.style(masked, fg='green')}")
+        styled_secret = click.style(masked, fg='green')
+        click.echo(f"STRIPE_WEBHOOK_SECRET: {styled_secret}")
     else:
-        click.echo(f"STRIPE_WEBHOOK_SECRET: {click.style('NOT SET', fg='red')}")
+        not_set_style = click.style('NOT SET', fg='red')
+        click.echo(f"STRIPE_WEBHOOK_SECRET: {not_set_style}")
 
     click.echo()
     click.echo("Required environment variables:")
