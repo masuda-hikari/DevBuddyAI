@@ -5,7 +5,7 @@
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
 - 進捗: Phase 1-2完了、Phase 3-4進行中
-- **NEW**: Stripe課金連携システム実装完了
+- **NEW**: FastAPI Webhookサーバー実装完了
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -74,8 +74,8 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 
 ## コード品質
 - flake8: 0 errors
-- mypy: 0 errors (21 source files)
-- テスト: **414件**全合格（+28件）
+- mypy: 0 errors (23 source files)
+- テスト: **436件**全合格（+22件）
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -97,6 +97,12 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - または: Actions → Publish this action to the Marketplace
 
 ## 最近の変更
+- 2026-01-11: **FastAPI Webhookサーバー追加**
+  - server/webhook.py新規作成（WebhookServer/create_app）
+  - CLI: server start/info コマンド追加
+  - エンドポイント: /health, /api/v1/prices, /api/v1/checkout/create, /api/v1/webhook/stripe
+  - pyproject.toml: server/billing オプション依存追加
+  - テスト22件追加（436件に増加）
 - 2026-01-11: **Stripe課金連携システム追加**
   - billing.py新規作成（BillingClient/BillingWebhookHandler）
   - CLI: billing plans/upgrade/status/cancel
@@ -125,7 +131,7 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 ## 収益化リンク
 SaaS/API課金モデル → Pro: ¥1,980/月、Team: ¥9,800/月
 目標: 1000万円達成に向けたPyPI公開・ユーザー獲得開始
-**NEW**: Stripe課金連携完了 → 決済導線確立
+**NEW**: Webhookサーバー完了 → デプロイ準備完了
 
 ## プラン別制限
 | プラン | レビュー/月 | ファイル行数 | テスト生成/月 | 修正提案/月 |
