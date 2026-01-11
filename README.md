@@ -2,6 +2,8 @@
 
 **AI-Powered Developer Assistant** - Your intelligent pair programmer that reviews code, generates tests, and suggests fixes.
 
+**English** | [日本語](README_ja.md)
+
 ## Overview
 
 DevBuddyAI leverages advanced AI to assist developers throughout the development lifecycle:
@@ -116,12 +118,12 @@ ignore_patterns:
 
 ## Pricing
 
-| Plan | Target | Price | Features |
-|------|--------|-------|----------|
-| **Free** | Open Source | $0/month | 50 reviews/month, public repos only |
-| **Pro** | Individuals | $19/month | 500 reviews/month, private repos, priority |
-| **Team** | Teams (up to 10) | $99/month | Unlimited reviews, GitHub integration |
-| **Enterprise** | Organizations | Contact us | Self-hosted, SSO, dedicated support |
+| Plan | Target | Price (USD) | Price (JPY) | Features |
+|------|--------|-------------|-------------|----------|
+| **Free** | Open Source | $0/month | ¥0/月 | 50 reviews/month, public repos only |
+| **Pro** | Individuals | $19/month | ¥1,980/月 | 500 reviews/month, private repos, priority |
+| **Team** | Teams (up to 10) | $99/month | ¥9,800/月 | Unlimited reviews, GitHub integration |
+| **Enterprise** | Organizations | Contact us | 要相談 | Self-hosted, SSO, dedicated support |
 
 ### Why Pay for DevBuddyAI?
 
