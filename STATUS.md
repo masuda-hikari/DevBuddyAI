@@ -69,6 +69,9 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
   - プライバシーポリシー (docs/privacy.html)
   - 利用規約 (docs/terms.html)
   - 特定商取引法に基づく表記 (docs/legal.html)
+- **商用ドキュメント完備**
+  - 貢献ガイド (docs/CONTRIBUTING.md)
+  - セキュリティポリシー (SECURITY.md)
 - CLIコンフィグ管理機能強化
 - **MkDocs APIリファレンスドキュメント**
   - docs_src/配下に全APIドキュメント
@@ -107,6 +110,9 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - または: Actions → Publish this action to the Marketplace
 
 ## 最近の変更
+- 2026-01-11: **商用ドキュメント追加（CONTRIBUTING.md, SECURITY.md）**
+  - docs/CONTRIBUTING.md: 貢献ガイド（開発環境、コーディング規約、PR手順）
+  - SECURITY.md: セキュリティポリシー（脆弱性報告、対応フロー）
 - 2026-01-11: **テストカバレッジ81%達成（+29件テスト追加、品質基準80%達成）**
   - test_analyzer.py: flake8/mypyテスト、エッジケーステスト追加
   - test_go_analyzer.py: 外部ツール連携テスト、マジックナンバー検出テスト追加
