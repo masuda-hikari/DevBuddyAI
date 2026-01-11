@@ -303,7 +303,9 @@ DESCRIPTION: Incomplete suggestion
     def test_suggest_fix_test_timeout(self, mock_run, fixer):
         """テスト実行タイムアウト"""
         import subprocess
-        mock_run.side_effect = subprocess.TimeoutExpired(cmd="pytest", timeout=120)
+        mock_run.side_effect = subprocess.TimeoutExpired(
+            cmd="pytest", timeout=120
+        )
 
         result = fixer.suggest_fix(Path("test.py"))
 

@@ -189,7 +189,9 @@ class TestLLMClientComplete:
         from unittest.mock import MagicMock
 
         mock_openai = MagicMock()
-        mock_message = type("MockMessage", (), {"content": "OpenAI response"})()
+        mock_message = type(
+            "MockMessage", (), {"content": "OpenAI response"}
+        )()
         mock_choice = type("MockChoice", (), {"message": mock_message})()
         mock_response = type("MockResponse", (), {"choices": [mock_choice]})()
         mock_client = mock_openai.OpenAI.return_value

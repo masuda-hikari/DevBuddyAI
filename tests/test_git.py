@@ -248,7 +248,9 @@ class TestGitOperationsWithMock:
         assert content == "old content"
 
     @patch("devbuddy.integrations.git.subprocess.run")
-    def test_get_file_content_at_commit_not_found(self, mock_run, mock_git_repo):
+    def test_get_file_content_at_commit_not_found(
+        self, mock_run, mock_git_repo
+    ):
         """存在しないファイル"""
         mock_run.return_value = MagicMock(
             stdout="",

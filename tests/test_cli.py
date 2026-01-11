@@ -159,7 +159,9 @@ class TestCLI:
 
     @patch.dict("os.environ", {"DEVBUDDY_API_KEY": "test-key"})
     @patch("devbuddy.cli.CodeReviewer")
-    def test_review_no_python_files(self, mock_reviewer_class, runner, tmp_path):
+    def test_review_no_python_files(
+        self, mock_reviewer_class, runner, tmp_path
+    ):
         """Pythonファイルなしでreview"""
         with runner.isolated_filesystem(temp_dir=tmp_path):
             # Python以外のファイル
@@ -200,7 +202,9 @@ class TestCLI:
 
     @patch.dict("os.environ", {"DEVBUDDY_API_KEY": "test-key"})
     @patch("devbuddy.cli.CodeReviewer")
-    def test_review_with_output_file(self, mock_reviewer_class, runner, tmp_path):
+    def test_review_with_output_file(
+        self, mock_reviewer_class, runner, tmp_path
+    ):
         """結果をファイルに出力"""
         mock_issue = MagicMock()
         mock_issue.level = "warning"

@@ -18,7 +18,9 @@ class TestJavaScriptAnalyzer:
 
     def test_init_custom_config(self):
         """カスタム設定での初期化"""
-        config = JSAnalysisConfig(use_eslint=False, use_tsc=True, strict_mode=True)
+        config = JSAnalysisConfig(
+            use_eslint=False, use_tsc=True, strict_mode=True
+        )
         analyzer = JavaScriptAnalyzer(config)
         assert analyzer.config.use_eslint is False
         assert analyzer.config.use_tsc is True
@@ -65,7 +67,10 @@ class TestPatternAnalysis:
         analyzer = JavaScriptAnalyzer()
         code = "function test() {\n  debugger;\n}"
         issues = analyzer._analyze_patterns(code)
-        assert any(i.level == "warning" and "debugger" in i.message for i in issues)
+        has_debugger = any(
+            i.level == "warning" and "debugger" in i.message for i in issues
+        )
+        assert has_debugger
 
     def test_detect_eval(self):
         """eval()の検出"""
@@ -119,14 +124,20 @@ class TestPatternAnalysis:
         analyzer = JavaScriptAnalyzer()
         code = "element.innerHTML = userInput;"
         issues = analyzer._analyze_patterns(code)
-        assert any(i.level == "warning" and "innerHTML" in i.message for i in issues)
+        has_innerhtml = any(
+            i.level == "warning" and "innerHTML" in i.message for i in issues
+        )
+        assert has_innerhtml
 
     def test_detect_sql_injection(self):
         """SQLインジェクションの検出"""
         analyzer = JavaScriptAnalyzer()
         code = "db.query(`SELECT * FROM users WHERE id = ${userId}`);"
         issues = analyzer._analyze_patterns(code)
-        assert any(i.level == "bug" and "SQL injection" in i.message for i in issues)
+        has_sqli = any(
+            i.level == "bug" and "SQL injection" in i.message for i in issues
+        )
+        assert has_sqli
 
     def test_detect_any_type(self):
         """TypeScript any型の検出"""
@@ -140,7 +151,9 @@ class TestPatternAnalysis:
         analyzer = JavaScriptAnalyzer()
         code = "const x = 1;\nconsole.log(x);\nconst y = 2;"
         issues = analyzer._analyze_patterns(code)
-        console_issue = next((i for i in issues if "console.log" in i.message), None)
+        console_issue = next(
+            (i for i in issues if "console.log" in i.message), None
+        )
         assert console_issue is not None
         assert console_issue.line == 2
 
@@ -273,21 +286,30 @@ class TestGetImports:
         analyzer = JavaScriptAnalyzer()
         code = "import { useState } from 'react';"
         imports = analyzer.get_imports(code)
-        assert any(i["name"] == "useState" and i["source"] == "react" for i in imports)
+        has_use_state = any(
+            i["name"] == "useState" and i["source"] == "react" for i in imports
+        )
+        assert has_use_state
 
     def test_get_default_import(self):
         """default import"""
         analyzer = JavaScriptAnalyzer()
         code = "import React from 'react';"
         imports = analyzer.get_imports(code)
-        assert any(i["name"] == "React" and i["source"] == "react" for i in imports)
+        has_react = any(
+            i["name"] == "React" and i["source"] == "react" for i in imports
+        )
+        assert has_react
 
     def test_get_namespace_import(self):
         """namespace import"""
         analyzer = JavaScriptAnalyzer()
         code = "import * as utils from './utils';"
         imports = analyzer.get_imports(code)
-        assert any(i["name"] == "utils" and i["source"] == "./utils" for i in imports)
+        has_utils = any(
+            i["name"] == "utils" and i["source"] == "./utils" for i in imports
+        )
+        assert has_utils
 
 
 class TestESLintIntegration:
@@ -296,7 +318,9 @@ class TestESLintIntegration:
     def test_eslint_not_found(self):
         """ESLintが見つからない場合"""
         analyzer = JavaScriptAnalyzer()
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".js", delete=False
+        ) as f:
             f.write("const x = 1;")
             f.flush()
             file_path = Path(f.name)
@@ -311,7 +335,9 @@ class TestESLintIntegration:
     def test_eslint_timeout(self):
         """ESLintタイムアウト"""
         analyzer = JavaScriptAnalyzer()
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".js", delete=False
+        ) as f:
             f.write("const x = 1;")
             f.flush()
             file_path = Path(f.name)
@@ -328,7 +354,9 @@ class TestESLintIntegration:
     def test_eslint_json_parse(self):
         """ESLint JSON出力のパース"""
         analyzer = JavaScriptAnalyzer()
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".js", delete=False
+        ) as f:
             f.write("const x = 1;")
             f.flush()
             file_path = Path(f.name)
@@ -362,7 +390,9 @@ class TestTSCIntegration:
     def test_tsc_not_found(self):
         """tscが見つからない場合"""
         analyzer = JavaScriptAnalyzer()
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ts", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ts", delete=False
+        ) as f:
             f.write("const x: number = 1;")
             f.flush()
             file_path = Path(f.name)
@@ -377,7 +407,9 @@ class TestTSCIntegration:
     def test_tsc_output_parse(self):
         """tsc出力のパース"""
         analyzer = JavaScriptAnalyzer()
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".ts", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".ts", delete=False
+        ) as f:
             f.write("const x: number = 'string';")
             f.flush()
             file_path = Path(f.name)
@@ -416,7 +448,9 @@ var x = 5;
         config = JSAnalysisConfig(use_eslint=False)  # ESLintは無効化
         analyzer = JavaScriptAnalyzer(config)
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".js", delete=False
+        ) as f:
             f.write("eval('alert(1)');")
             f.flush()
             file_path = Path(f.name)

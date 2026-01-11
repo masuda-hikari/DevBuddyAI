@@ -150,7 +150,8 @@ class TestEndpoints:
 
         return TestClient(app)
 
-    def test_health_check(self, client) -> None:  # type: ignore[no-untyped-def]
+    # type: ignore[no-untyped-def]
+    def test_health_check(self, client) -> None:
         """ヘルスチェックエンドポイント"""
         response = client.get("/health")
         assert response.status_code == 200
@@ -176,7 +177,8 @@ class TestEndpoints:
             assert "interval" in price
             assert "display_name" in price
 
-    def test_get_price_by_plan_pro(self, client) -> None:  # type: ignore[no-untyped-def]
+    # type: ignore[no-untyped-def]
+    def test_get_price_by_plan_pro(self, client) -> None:
         """Proプラン価格取得"""
         response = client.get("/api/v1/prices/pro")
         assert response.status_code == 200
@@ -185,7 +187,8 @@ class TestEndpoints:
         assert data["amount"] == 1980
         assert data["currency"] == "jpy"
 
-    def test_get_price_by_plan_team(self, client) -> None:  # type: ignore[no-untyped-def]
+    # type: ignore[no-untyped-def]
+    def test_get_price_by_plan_team(self, client) -> None:
         """Teamプラン価格取得"""
         response = client.get("/api/v1/prices/team")
         assert response.status_code == 200
@@ -201,7 +204,8 @@ class TestEndpoints:
         response = client.get("/api/v1/prices/invalid")
         assert response.status_code == 404
 
-    def test_get_price_free_plan(self, client) -> None:  # type: ignore[no-untyped-def]
+    # type: ignore[no-untyped-def]
+    def test_get_price_free_plan(self, client) -> None:
         """Freeプランの価格取得（存在しない）"""
         response = client.get("/api/v1/prices/free")
         assert response.status_code == 404

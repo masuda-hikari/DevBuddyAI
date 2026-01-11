@@ -5,7 +5,11 @@ CodeTestGeneratorのテスト
 import pytest
 from pathlib import Path
 
-from devbuddy.core.generator import CodeTestGenerator, FunctionInfo, GenerationResult
+from devbuddy.core.generator import (
+    CodeTestGenerator,
+    FunctionInfo,
+    GenerationResult,
+)
 from devbuddy.llm.client import MockLLMClient
 
 
@@ -43,7 +47,9 @@ def test_add_negative():
         assert result.success is False
         assert "Failed to read file" in result.error
 
-    def test_generate_tests_function_not_found(self, generator, temp_python_file):
+    def test_generate_tests_function_not_found(
+        self, generator, temp_python_file
+    ):
         """存在しない関数指定"""
         result = generator.generate_tests(
             temp_python_file,
@@ -220,7 +226,9 @@ def test_example():
         mock_client.complete.side_effect = Exception("API Error")
 
         # テスト時はライセンスチェックをスキップ
-        generator = CodeTestGenerator(client=mock_client, skip_license_check=True)
+        generator = CodeTestGenerator(
+            client=mock_client, skip_license_check=True
+        )
 
         source_file = tmp_path / "test.py"
         source_file.write_text("def foo(): pass")

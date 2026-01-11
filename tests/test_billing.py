@@ -128,10 +128,11 @@ class TestBillingClient:
 
     def test_init_with_env_vars(self):
         """環境変数からの初期化"""
-        with patch.dict(
-            "os.environ",
-            {"STRIPE_API_KEY": "sk_test_123", "STRIPE_WEBHOOK_SECRET": "whsec_123"},
-        ):
+        env_vars = {
+            "STRIPE_API_KEY": "sk_test_123",
+            "STRIPE_WEBHOOK_SECRET": "whsec_123"
+        }
+        with patch.dict("os.environ", env_vars):
             client = BillingClient()
             assert client.api_key == "sk_test_123"
             assert client.webhook_secret == "whsec_123"
@@ -419,7 +420,10 @@ class TestBillingIntegration:
             "data": {
                 "object": {
                     "customer_email": "customer@example.com",
-                    "metadata": {"plan": "pro", "email": "customer@example.com"},
+                    "metadata": {
+                        "plan": "pro",
+                        "email": "customer@example.com"
+                    },
                 }
             },
         }
@@ -450,7 +454,10 @@ class TestBillingIntegration:
             "data": {
                 "object": {
                     "status": "active",
-                    "metadata": {"plan": "pro", "email": "customer@example.com"},
+                    "metadata": {
+                        "plan": "pro",
+                        "email": "customer@example.com"
+                    },
                 }
             },
         }
