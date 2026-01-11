@@ -23,7 +23,10 @@ func main() {
 """
         issues = self.analyzer.analyze(code)
         assert any("panic()" in i.message for i in issues)
-        assert any(i.level == "warning" for i in issues if "panic" in i.message)
+        has_panic_warn = any(
+            i.level == "warning" for i in issues if "panic" in i.message
+        )
+        assert has_panic_warn
 
     def test_detect_recover(self):
         """recover()の検出"""
@@ -133,7 +136,10 @@ func main() {
 """
         issues = self.analyzer.analyze(code)
         assert any("unsafe" in i.message for i in issues)
-        assert any(i.level == "warning" for i in issues if "unsafe" in i.message)
+        has_unsafe_warn = any(
+            i.level == "warning" for i in issues if "unsafe" in i.message
+        )
+        assert has_unsafe_warn
 
     def test_detect_reflect(self):
         """reflectパッケージの検出"""
@@ -607,10 +613,12 @@ func main() {
         assert "main" in functions
 
         methods = self.analyzer.get_methods(code)
-        assert any(
-            m.get("receiver") == "Server" and m.get("method") == "AddConnection"
+        has_add_conn = any(
+            m.get("receiver") == "Server"
+            and m.get("method") == "AddConnection"
             for m in methods
         )
+        assert has_add_conn
 
         imports = self.analyzer.get_imports(code)
         assert "fmt" in imports

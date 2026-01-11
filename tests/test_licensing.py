@@ -300,7 +300,8 @@ class TestUsageLimits:
         usage.reviews = 50
         manager._save_usage()
 
-        with pytest.raises(UsageLimitError, match="Monthly review limit reached"):
+        err_msg = "Monthly review limit reached"
+        with pytest.raises(UsageLimitError, match=err_msg):
             manager.check_review_limit()
 
     def test_check_file_size_within(self, temp_dir):
@@ -324,7 +325,8 @@ class TestUsageLimits:
         usage.testgens = 20  # Freeプランの制限
         manager._save_usage()
 
-        with pytest.raises(UsageLimitError, match="Monthly test generation limit"):
+        err_msg = "Monthly test generation limit"
+        with pytest.raises(UsageLimitError, match=err_msg):
             manager.check_testgen_limit()
 
     def test_check_fix_limit_exceeded(self, temp_dir):
@@ -334,7 +336,8 @@ class TestUsageLimits:
         usage.fixes = 10  # Freeプランの制限
         manager._save_usage()
 
-        with pytest.raises(UsageLimitError, match="Monthly fix suggestion limit"):
+        err_msg = "Monthly fix suggestion limit"
+        with pytest.raises(UsageLimitError, match=err_msg):
             manager.check_fix_limit()
 
     def test_pro_plan_higher_limits(self, temp_dir):

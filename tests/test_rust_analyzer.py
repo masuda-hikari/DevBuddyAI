@@ -19,7 +19,10 @@ fn main() {
 """
         issues = self.analyzer.analyze(code)
         assert any("unwrap()" in i.message for i in issues)
-        assert any(i.level == "warning" for i in issues if "unwrap" in i.message)
+        has_unwrap_warn = any(
+            i.level == "warning" for i in issues if "unwrap" in i.message
+        )
+        assert has_unwrap_warn
 
     def test_detect_empty_expect(self):
         """空メッセージのexpect()検出"""
@@ -42,7 +45,10 @@ fn main() {
 """
         issues = self.analyzer.analyze(code)
         assert any("panic!" in i.message for i in issues)
-        assert any(i.level == "warning" for i in issues if "panic" in i.message)
+        has_panic_warn = any(
+            i.level == "warning" for i in issues if "panic" in i.message
+        )
+        assert has_panic_warn
 
     def test_detect_println(self):
         """println!の検出"""
@@ -75,7 +81,10 @@ fn main() {
 """
         issues = self.analyzer.analyze(code)
         assert any("unsafe" in i.message for i in issues)
-        assert any(i.level == "warning" for i in issues if "unsafe" in i.message)
+        has_unsafe_warn = any(
+            i.level == "warning" for i in issues if "unsafe" in i.message
+        )
+        assert has_unsafe_warn
 
     def test_detect_todo(self):
         """TODO/FIXMEの検出"""
@@ -108,7 +117,10 @@ fn main() {
 """
         issues = self.analyzer.analyze(code)
         assert any("transmute" in i.message for i in issues)
-        assert any(i.level == "bug" for i in issues if "transmute" in i.message)
+        has_transmute_bug = any(
+            i.level == "bug" for i in issues if "transmute" in i.message
+        )
+        assert has_transmute_bug
 
     def test_detect_numeric_cast(self):
         """数値キャストの検出"""

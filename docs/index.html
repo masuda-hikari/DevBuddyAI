@@ -3,21 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevBuddyAI - AIペアプログラマー</title>
-    <meta name="description" content="DevBuddyAIは、AIを活用したコードレビュー、テスト生成、バグ修正提案を行う開発者支援ツールです。">
+    <title>DevBuddyAI - AIペアプログラマー | コードレビュー・テスト生成・バグ修正</title>
+    <meta name="description" content="DevBuddyAIは、AIを活用したコードレビュー、テスト生成、バグ修正提案を行う開発者支援ツールです。Python、JavaScript、TypeScript、Rust、Goに対応。">
+    <meta name="keywords" content="AI,コードレビュー,テスト生成,バグ修正,開発者ツール,Python,JavaScript,TypeScript,Rust,Go">
+    <meta property="og:title" content="DevBuddyAI - AIペアプログラマー">
+    <meta property="og:description" content="AIがあなたのコードをレビュー・テスト・修正。開発効率を40%向上。">
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="https://masuda-hikari.github.io/DevBuddyAI/">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
             --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
             --secondary: #10b981;
+            --secondary-light: #34d399;
+            --accent: #f59e0b;
             --bg-dark: #0f172a;
+            --bg-darker: #020617;
             --bg-card: #1e293b;
+            --bg-card-hover: #334155;
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
+            --text-muted: #64748b;
             --border: #334155;
+            --border-light: #475569;
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --gradient-secondary: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         * {
@@ -26,11 +41,16 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-dark);
             color: var(--text-primary);
-            line-height: 1.6;
+            line-height: 1.7;
+            overflow-x: hidden;
         }
 
         /* Navigation */
@@ -38,11 +58,12 @@
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
             z-index: 1000;
-            padding: 1rem 2rem;
+            padding: 0.75rem 1.5rem;
         }
 
         .nav-container {
@@ -55,14 +76,24 @@
 
         .logo {
             font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
         }
 
         .nav-links {
             display: flex;
-            gap: 2rem;
+            gap: 2.5rem;
             list-style: none;
         }
 
@@ -70,48 +101,114 @@
             color: var(--text-secondary);
             text-decoration: none;
             font-weight: 500;
+            font-size: 0.95rem;
             transition: color 0.2s;
+            position: relative;
         }
 
         .nav-links a:hover {
             color: var(--text-primary);
         }
 
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
         .nav-cta {
-            background: var(--primary);
+            background: var(--gradient-primary);
             color: white;
-            padding: 0.5rem 1.5rem;
+            padding: 0.6rem 1.5rem;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            transition: background 0.2s;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         }
 
         .nav-cta:hover {
-            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
         }
 
         /* Hero Section */
         .hero {
-            padding: 10rem 2rem 6rem;
+            padding: 8rem 1.5rem 5rem;
             text-align: center;
-            background: linear-gradient(180deg, var(--bg-dark) 0%, #1a1f35 100%);
+            background:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(16, 185, 129, 0.1), transparent),
+                var(--bg-dark);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--primary-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-badge-icon {
+            font-size: 1rem;
         }
 
         .hero h1 {
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 700;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
             margin-bottom: 1.5rem;
-            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 50%, #fff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-highlight {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .hero p {
             font-size: 1.25rem;
             color: var(--text-secondary);
-            max-width: 600px;
+            max-width: 650px;
             margin: 0 auto 2.5rem;
+            position: relative;
+            z-index: 1;
         }
 
         .hero-buttons {
@@ -119,61 +216,95 @@
             gap: 1rem;
             justify-content: center;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: var(--gradient-primary);
             color: white;
-            padding: 1rem 2rem;
-            border-radius: 10px;
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 600;
             font-size: 1.1rem;
-            transition: all 0.2s;
+            transition: all 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
         }
 
         .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.5);
         }
 
         .btn-secondary {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.05);
             color: var(--text-primary);
-            padding: 1rem 2rem;
-            border-radius: 10px;
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
             border: 2px solid var(--border);
             text-decoration: none;
             font-weight: 600;
             font-size: 1.1rem;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
         .btn-secondary:hover {
             border-color: var(--primary);
-            color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateY(-3px);
+        }
+
+        /* Trust Badges */
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .trust-badge-icon {
+            color: var(--secondary);
+            font-size: 1.1rem;
         }
 
         /* Code Demo */
         .code-demo {
-            max-width: 800px;
+            max-width: 900px;
             margin: 4rem auto 0;
             background: var(--bg-card);
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid var(--border);
             overflow: hidden;
             text-align: left;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 1;
         }
 
         .code-header {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1rem;
-            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem 1.25rem;
+            background: rgba(0, 0, 0, 0.4);
             border-bottom: 1px solid var(--border);
         }
 
@@ -187,118 +318,253 @@
         .code-dot.yellow { background: #eab308; }
         .code-dot.green { background: #22c55e; }
 
+        .code-title {
+            margin-left: auto;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         .code-body {
             padding: 1.5rem;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.9rem;
             overflow-x: auto;
+            background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 100%);
         }
 
         .code-line {
             display: block;
-            padding: 0.2rem 0;
+            padding: 0.25rem 0;
+            white-space: pre;
         }
 
-        .code-comment { color: #6b7280; }
-        .code-command { color: var(--secondary); }
+        .code-comment { color: #6b7280; font-style: italic; }
+        .code-command { color: var(--secondary-light); }
         .code-output { color: var(--text-secondary); }
-        .code-warning { color: #f59e0b; }
-        .code-bug { color: #ef4444; }
-        .code-success { color: #22c55e; }
+        .code-warning { color: #fbbf24; }
+        .code-bug { color: #f87171; }
+        .code-success { color: #4ade80; }
 
-        /* Features Section */
-        .features {
-            padding: 6rem 2rem;
+        /* Value Proposition Section */
+        .value-prop {
+            padding: 6rem 1.5rem;
+            background: var(--bg-darker);
+        }
+
+        .value-prop-container {
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        .section-title {
+        .value-prop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .value-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
             text-align: center;
+            transition: all 0.3s;
+        }
+
+        .value-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .value-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
             font-size: 2.5rem;
-            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .value-stat {
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .value-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .value-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-light);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
             margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .section-subtitle {
-            text-align: center;
             color: var(--text-secondary);
             font-size: 1.2rem;
-            margin-bottom: 4rem;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
         }
 
         .feature-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 2rem;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         .feature-card:hover {
             border-color: var(--primary);
-            transform: translateY(-4px);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
         }
 
         .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            border-radius: 12px;
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-primary);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 1.5rem;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
         }
 
         .feature-card h3 {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             margin-bottom: 0.75rem;
+            font-weight: 700;
         }
 
         .feature-card p {
             color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
         }
 
-        /* Stats Section */
-        .stats {
-            background: var(--bg-card);
-            padding: 4rem 2rem;
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
+        /* Languages Section */
+        .languages {
+            padding: 4rem 1.5rem;
+            background: var(--bg-darker);
         }
 
-        .stats-grid {
+        .languages-container {
             max-width: 1000px;
             margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
             text-align: center;
         }
 
-        .stat-item h4 {
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
+        .languages-grid {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
         }
 
-        .stat-item p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
+        .language-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .language-badge:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .language-icon {
+            font-size: 1.5rem;
+        }
+
+        .language-name {
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
         /* Pricing Section */
         .pricing {
-            padding: 6rem 2rem;
+            padding: 6rem 1.5rem;
             max-width: 1200px;
             margin: 0 auto;
         }
@@ -306,88 +572,121 @@
         .pricing-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
+            gap: 1.5rem;
+            align-items: stretch;
         }
 
         .pricing-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
         }
 
         .pricing-card.popular {
-            border-color: var(--primary);
-            transform: scale(1.05);
+            border: 2px solid var(--primary);
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.1) 0%, var(--bg-card) 100%);
+            box-shadow: 0 20px 50px rgba(99, 102, 241, 0.2);
         }
 
         .popular-badge {
             position: absolute;
-            top: -12px;
+            top: -14px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--primary);
+            background: var(--gradient-primary);
             color: white;
-            padding: 0.25rem 1rem;
-            border-radius: 20px;
+            padding: 0.4rem 1.5rem;
+            border-radius: 50px;
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
         .pricing-card h3 {
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
-        }
-
-        .pricing-card .price {
-            font-size: 2.5rem;
             font-weight: 700;
-            margin: 1rem 0;
         }
 
-        .pricing-card .price span {
-            font-size: 1rem;
+        .pricing-description {
             color: var(--text-secondary);
-            font-weight: 400;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-price {
+            margin: 1.5rem 0;
+        }
+
+        .price-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .price-currency {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .price-period {
+            font-size: 1rem;
+            color: var(--text-muted);
         }
 
         .pricing-features {
             list-style: none;
             margin: 1.5rem 0;
+            flex-grow: 1;
         }
 
         .pricing-features li {
-            padding: 0.5rem 0;
+            padding: 0.6rem 0;
             color: var(--text-secondary);
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            font-size: 0.95rem;
         }
 
         .pricing-features li::before {
-            content: "\u2713";
+            content: "✓";
             color: var(--secondary);
             font-weight: bold;
+            font-size: 1.1rem;
         }
 
         .pricing-btn {
             display: block;
             text-align: center;
-            padding: 1rem;
-            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 600;
-            transition: all 0.2s;
+            font-size: 1rem;
+            transition: all 0.3s;
+            margin-top: auto;
         }
 
         .pricing-btn.primary {
-            background: var(--primary);
+            background: var(--gradient-primary);
             color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         }
 
         .pricing-btn.primary:hover {
-            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
         }
 
         .pricing-btn.secondary {
@@ -398,17 +697,65 @@
 
         .pricing-btn.secondary:hover {
             border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 6rem 1.5rem;
+            background: var(--bg-darker);
+        }
+
+        .how-it-works-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .step-card {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 64px;
+            height: 64px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .step-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .step-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
         }
 
         /* Security Section */
         .security {
-            padding: 6rem 2rem;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border);
+            padding: 6rem 1.5rem;
+            background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
         }
 
         .security-content {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             text-align: center;
         }
@@ -416,68 +763,112 @@
         .security-badges {
             display: flex;
             justify-content: center;
-            gap: 2rem;
-            margin-top: 2rem;
+            gap: 1.5rem;
+            margin-top: 3rem;
             flex-wrap: wrap;
         }
 
         .security-badge {
-            background: var(--bg-dark);
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
+            transition: all 0.3s;
+        }
+
+        .security-badge:hover {
+            border-color: var(--secondary);
+            transform: translateY(-3px);
         }
 
         .security-badge-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--secondary);
-            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-secondary);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
+        }
+
+        .security-badge-text h4 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .security-badge-text p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
         }
 
         /* CTA Section */
         .cta {
-            padding: 6rem 2rem;
+            padding: 6rem 1.5rem;
             text-align: center;
-            background: linear-gradient(180deg, var(--bg-dark) 0%, #1a1f35 100%);
+            background:
+                radial-gradient(ellipse 80% 50% at 50% 100%, rgba(99, 102, 241, 0.15), transparent),
+                var(--bg-dark);
+        }
+
+        .cta-container {
+            max-width: 700px;
+            margin: 0 auto;
         }
 
         .cta h2 {
-            font-size: 2.5rem;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
             margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .cta p {
             color: var(--text-secondary);
             font-size: 1.2rem;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
         /* Footer */
         footer {
-            background: var(--bg-card);
+            background: var(--bg-darker);
             border-top: 1px solid var(--border);
-            padding: 3rem 2rem;
+            padding: 4rem 1.5rem 2rem;
         }
 
         .footer-content {
             max-width: 1200px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: 2fr repeat(3, 1fr);
             gap: 3rem;
         }
 
-        .footer-section h4 {
-            font-size: 1.1rem;
+        .footer-brand {
+            max-width: 280px;
+        }
+
+        .footer-brand .logo {
             margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .footer-brand p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .footer-section h4 {
+            font-size: 1rem;
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
         }
 
         .footer-section ul {
@@ -488,21 +879,43 @@
             color: var(--text-secondary);
             text-decoration: none;
             display: block;
-            padding: 0.25rem 0;
-            transition: color 0.2s;
+            padding: 0.35rem 0;
+            font-size: 0.9rem;
+            transition: all 0.2s;
         }
 
         .footer-section a:hover {
-            color: var(--text-primary);
+            color: var(--primary-light);
+            transform: translateX(3px);
         }
 
         .footer-bottom {
             max-width: 1200px;
-            margin: 2rem auto 0;
+            margin: 3rem auto 0;
             padding-top: 2rem;
             border-top: 1px solid var(--border);
-            text-align: center;
-            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
         }
 
         /* Mobile Menu */
@@ -513,15 +926,27 @@
             color: var(--text-primary);
             font-size: 1.5rem;
             cursor: pointer;
+            padding: 0.5rem;
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
+        @media (max-width: 1024px) {
+            .value-prop-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            .nav-cta {
+            .steps-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .nav-cta {
                 display: none;
             }
 
@@ -529,61 +954,146 @@
                 display: block;
             }
 
+            .hero {
+                padding: 7rem 1rem 4rem;
+            }
+
             .hero h1 {
-                font-size: 2rem;
+                font-size: 2.25rem;
             }
 
             .hero p {
                 font-size: 1rem;
             }
 
+            .btn-primary, .btn-secondary {
+                padding: 0.875rem 1.75rem;
+                font-size: 1rem;
+            }
+
+            .trust-badges {
+                gap: 1rem;
+            }
+
+            .value-prop-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
             .pricing-card.popular {
                 transform: none;
             }
 
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .security-badges {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .footer-brand {
+                max-width: 100%;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
             }
         }
 
         /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .hero h1, .hero p, .hero-buttons, .code-demo {
-            animation: fadeIn 0.6s ease-out forwards;
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
-        .hero p { animation-delay: 0.1s; }
-        .hero-buttons { animation-delay: 0.2s; }
-        .code-demo { animation-delay: 0.3s; }
+        .hero-badge, .hero h1, .hero p, .hero-buttons, .trust-badges, .code-demo {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .hero-badge { animation-delay: 0s; }
+        .hero h1 { animation-delay: 0.1s; }
+        .hero p { animation-delay: 0.2s; }
+        .hero-buttons { animation-delay: 0.3s; }
+        .trust-badges { animation-delay: 0.4s; }
+        .code-demo { animation-delay: 0.5s; }
     </style>
 </head>
 <body>
     <!-- Navigation -->
     <nav>
         <div class="nav-container">
-            <a href="#" class="logo">DevBuddyAI</a>
+            <a href="#" class="logo">
+                <span class="logo-icon">🤖</span>
+                <span>DevBuddyAI</span>
+            </a>
             <ul class="nav-links">
                 <li><a href="#features">機能</a></li>
                 <li><a href="#pricing">料金</a></li>
-                <li><a href="https://github.com/masuda-hikari/DevBuddyAI" target="_blank">GitHub</a></li>
                 <li><a href="#security">セキュリティ</a></li>
+                <li><a href="https://github.com/masuda-hikari/DevBuddyAI" target="_blank">GitHub</a></li>
             </ul>
-            <a href="#pricing" class="nav-cta">無料で始める</a>
-            <button class="mobile-menu-btn" aria-label="Menu">&#9776;</button>
+            <a href="#pricing" class="nav-cta">無料で始める →</a>
+            <button class="mobile-menu-btn" aria-label="メニュー">☰</button>
         </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero">
-        <h1>AIがあなたのコードを<br>レビュー・テスト・修正</h1>
-        <p>DevBuddyAIは、プロフェッショナルな品質のコードレビュー、自動テスト生成、バグ修正提案を提供するAIペアプログラマーです。</p>
+        <div class="hero-badge">
+            <span class="hero-badge-icon">⚡</span>
+            <span>AIペアプログラマー登場</span>
+        </div>
+        <h1>コードレビューを<br><span class="hero-highlight">AIにおまかせ</span></h1>
+        <p>バグ検出、テスト自動生成、修正提案まで。あなたの開発効率を劇的に向上させるAIパートナー。無料で今すぐ始められます。</p>
         <div class="hero-buttons">
-            <a href="#pricing" class="btn-primary">無料で始める</a>
-            <a href="https://github.com/masuda-hikari/DevBuddyAI" class="btn-secondary" target="_blank">GitHub</a>
+            <a href="https://github.com/masuda-hikari/DevBuddyAI" class="btn-primary" target="_blank">
+                ⚡ 無料で始める
+            </a>
+            <a href="#features" class="btn-secondary">
+                機能を見る →
+            </a>
+        </div>
+
+        <div class="trust-badges">
+            <div class="trust-badge">
+                <span class="trust-badge-icon">✓</span>
+                <span>5言語対応</span>
+            </div>
+            <div class="trust-badge">
+                <span class="trust-badge-icon">✓</span>
+                <span>GitHub連携</span>
+            </div>
+            <div class="trust-badge">
+                <span class="trust-badge-icon">✓</span>
+                <span>VSCode拡張</span>
+            </div>
+            <div class="trust-badge">
+                <span class="trust-badge-icon">✓</span>
+                <span>オープンソース</span>
+            </div>
         </div>
 
         <!-- Code Demo -->
@@ -592,130 +1102,213 @@
                 <span class="code-dot red"></span>
                 <span class="code-dot yellow"></span>
                 <span class="code-dot green"></span>
-                <span style="margin-left: auto; color: var(--text-secondary); font-size: 0.85rem;">Terminal</span>
+                <span class="code-title">Terminal — devbuddy</span>
             </div>
             <div class="code-body">
                 <span class="code-line code-comment"># コードレビューを実行</span>
+                <span class="code-line code-command">$ pip install devbuddy-ai</span>
                 <span class="code-line code-command">$ devbuddy review src/mycode.py</span>
-                <span class="code-line code-output">&nbsp;</span>
-                <span class="code-line code-output">DevBuddyAI Code Review Results:</span>
-                <span class="code-line code-output">================================</span>
-                <span class="code-line code-output">&nbsp;</span>
-                <span class="code-line code-warning">[WARNING] Line 23: 'data' may be None</span>
-                <span class="code-line code-output">  -> Add null check before accessing data.items()</span>
-                <span class="code-line code-output">&nbsp;</span>
-                <span class="code-line code-bug">[BUG] Line 67: Division by zero possible</span>
-                <span class="code-line code-output">  -> Add guard: if count == 0: return 0</span>
-                <span class="code-line code-output">&nbsp;</span>
-                <span class="code-line code-success">Summary: 1 bug, 1 warning found</span>
+                <span class="code-line code-output"></span>
+                <span class="code-line code-output">🔍 DevBuddyAI Analyzing...</span>
+                <span class="code-line code-output">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+                <span class="code-line code-output"></span>
+                <span class="code-line code-warning">⚠️  [WARNING] Line 23: 'data' may be None</span>
+                <span class="code-line code-output">   → Add null check before accessing data.items()</span>
+                <span class="code-line code-output"></span>
+                <span class="code-line code-bug">🐛 [BUG] Line 67: Division by zero possible</span>
+                <span class="code-line code-output">   → Add guard: if count == 0: return 0</span>
+                <span class="code-line code-output"></span>
+                <span class="code-line code-success">✅ Summary: 1 bug, 1 warning found</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Value Proposition -->
+    <section class="value-prop">
+        <div class="value-prop-container">
+            <div class="value-prop-grid">
+                <div class="value-card">
+                    <div class="value-icon">⏱️</div>
+                    <div class="value-stat">40%</div>
+                    <h3>レビュー時間削減</h3>
+                    <p>AIが事前にコードをチェック。人間のレビューはより重要な設計判断に集中できます。</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🛡️</div>
+                    <div class="value-stat">86%</div>
+                    <h3>バグ検出率</h3>
+                    <p>静的解析とAIの組み合わせで、リリース前に多くのバグを発見・修正。</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">🧪</div>
+                    <div class="value-stat">3x</div>
+                    <h3>テスト生成速度</h3>
+                    <p>関数からユニットテストを自動生成。エッジケースも考慮した網羅的なテスト。</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
     <section id="features" class="features">
-        <h2 class="section-title">主な機能</h2>
-        <p class="section-subtitle">AIの力で開発効率を最大化</p>
+        <div class="section-header">
+            <span class="section-label">機能</span>
+            <h2 class="section-title">開発効率を最大化する機能</h2>
+            <p class="section-subtitle">AIの力で、より速く、より正確に、より安全に開発</p>
+        </div>
 
         <div class="features-grid">
             <div class="feature-card">
-                <div class="feature-icon">&#128269;</div>
+                <div class="feature-icon">🔍</div>
                 <h3>AIコードレビュー</h3>
                 <p>バグ、セキュリティ脆弱性、スタイル違反を自動検出。具体的な修正提案付きで即座にフィードバック。</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">&#9881;</div>
+                <div class="feature-icon">🧪</div>
                 <h3>テスト自動生成</h3>
                 <p>関数やクラスから自動でユニットテストを生成。エッジケース、境界値テストも考慮した網羅的なテスト。</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">&#128295;</div>
+                <div class="feature-icon">🔧</div>
                 <h3>バグ修正提案</h3>
-                <p>失敗したテストや既知のバグに対して、AIが具体的な修正コードを提案。</p>
+                <p>失敗したテストや既知のバグに対して、AIが具体的な修正コードを提案。自動検証ループで精度向上。</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">&#128640;</div>
-                <h3>GitHub連携</h3>
-                <p>Pull Requestに自動でレビューコメント。CIワークフローに簡単統合。</p>
+                <div class="feature-icon">🚀</div>
+                <h3>GitHub Action連携</h3>
+                <p>Pull Requestに自動でレビューコメント。CI/CDワークフローに数行で簡単統合。</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">&#127919;</div>
-                <h3>複数言語対応</h3>
-                <p>Python、JavaScript、TypeScript、Rust、Goなど主要言語をサポート。</p>
+                <div class="feature-icon">💻</div>
+                <h3>VSCode拡張</h3>
+                <p>エディタ内で直接レビュー・テスト生成・修正提案。ショートカットで即座に実行。</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">&#128274;</div>
-                <h3>セキュリティ重視</h3>
-                <p>コードは処理後すぐに破棄。Enterprise版では完全自己ホスト対応。</p>
+                <div class="feature-icon">📊</div>
+                <h3>複数出力形式</h3>
+                <p>Text、JSON、Markdown形式での出力に対応。CI/CDやドキュメント生成に柔軟に対応。</p>
             </div>
         </div>
     </section>
 
-    <!-- Stats Section -->
-    <section class="stats">
-        <div class="stats-grid">
-            <div class="stat-item">
-                <h4>40%</h4>
-                <p>レビュー時間削減</p>
+    <!-- Languages Section -->
+    <section class="languages">
+        <div class="languages-container">
+            <span class="section-label">対応言語</span>
+            <h2 class="section-title">主要な言語をサポート</h2>
+            <div class="languages-grid">
+                <div class="language-badge">
+                    <span class="language-icon">🐍</span>
+                    <span class="language-name">Python</span>
+                </div>
+                <div class="language-badge">
+                    <span class="language-icon">📜</span>
+                    <span class="language-name">JavaScript</span>
+                </div>
+                <div class="language-badge">
+                    <span class="language-icon">📘</span>
+                    <span class="language-name">TypeScript</span>
+                </div>
+                <div class="language-badge">
+                    <span class="language-icon">🦀</span>
+                    <span class="language-name">Rust</span>
+                </div>
+                <div class="language-badge">
+                    <span class="language-icon">🐹</span>
+                    <span class="language-name">Go</span>
+                </div>
             </div>
-            <div class="stat-item">
-                <h4>86%</h4>
-                <p>テストカバレッジ</p>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="how-it-works-container">
+            <div class="section-header">
+                <span class="section-label">使い方</span>
+                <h2 class="section-title">3ステップで始める</h2>
             </div>
-            <div class="stat-item">
-                <h4>5+</h4>
-                <p>対応言語</p>
-            </div>
-            <div class="stat-item">
-                <h4>100%</h4>
-                <p>オープンソース</p>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>インストール</h3>
+                    <p>pip install devbuddy-ai<br>たった1行でインストール完了</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>API設定</h3>
+                    <p>devbuddy auth<br>APIキーを設定するだけ</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>レビュー実行</h3>
+                    <p>devbuddy review src/<br>即座にAIがコードを分析</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Pricing Section -->
     <section id="pricing" class="pricing">
-        <h2 class="section-title">シンプルな料金プラン</h2>
-        <p class="section-subtitle">あなたのニーズに合わせて選べる</p>
+        <div class="section-header">
+            <span class="section-label">料金プラン</span>
+            <h2 class="section-title">シンプルな料金体系</h2>
+            <p class="section-subtitle">まずは無料で試して、必要に応じてアップグレード</p>
+        </div>
 
         <div class="pricing-grid">
             <div class="pricing-card">
                 <h3>Free</h3>
-                <p style="color: var(--text-secondary);">オープンソースプロジェクト向け</p>
-                <div class="price">$0<span>/月</span></div>
+                <p class="pricing-description">個人開発・OSS向け</p>
+                <div class="pricing-price">
+                    <span class="price-currency">¥</span>
+                    <span class="price-value">0</span>
+                    <span class="price-period">/月</span>
+                </div>
                 <ul class="pricing-features">
                     <li>50レビュー/月</li>
-                    <li>公開リポジトリのみ</li>
+                    <li>20テスト生成/月</li>
+                    <li>公開リポジトリ対応</li>
                     <li>基本的な静的解析</li>
                     <li>コミュニティサポート</li>
                 </ul>
-                <a href="https://github.com/masuda-hikari/DevBuddyAI" class="pricing-btn secondary">GitHub で始める</a>
+                <a href="https://github.com/masuda-hikari/DevBuddyAI" class="pricing-btn secondary" target="_blank">GitHub で始める</a>
             </div>
 
             <div class="pricing-card popular">
-                <span class="popular-badge">人気</span>
+                <span class="popular-badge">おすすめ</span>
                 <h3>Pro</h3>
-                <p style="color: var(--text-secondary);">個人・小規模チーム向け</p>
-                <div class="price">$19<span>/月</span></div>
+                <p class="pricing-description">個人・小規模チーム向け</p>
+                <div class="pricing-price">
+                    <span class="price-currency">¥</span>
+                    <span class="price-value">1,980</span>
+                    <span class="price-period">/月</span>
+                </div>
                 <ul class="pricing-features">
                     <li>500レビュー/月</li>
+                    <li>200テスト生成/月</li>
                     <li>プライベートリポジトリ対応</li>
                     <li>高度なAI分析</li>
-                    <li>優先サポート</li>
                     <li>GitHub Action統合</li>
+                    <li>優先サポート</li>
                 </ul>
-                <a href="#" class="pricing-btn primary">今すぐ始める</a>
+                <a href="#" class="pricing-btn primary">今すぐ始める →</a>
             </div>
 
             <div class="pricing-card">
                 <h3>Team</h3>
-                <p style="color: var(--text-secondary);">中規模チーム向け（10名まで）</p>
-                <div class="price">$99<span>/月</span></div>
+                <p class="pricing-description">中規模チーム向け（10名まで）</p>
+                <div class="pricing-price">
+                    <span class="price-currency">¥</span>
+                    <span class="price-value">9,800</span>
+                    <span class="price-period">/月</span>
+                </div>
                 <ul class="pricing-features">
                     <li>無制限レビュー</li>
+                    <li>無制限テスト生成</li>
                     <li>チーム管理機能</li>
                     <li>カスタムルール設定</li>
-                    <li>専用Slack連携</li>
+                    <li>Slack連携</li>
                     <li>SLA保証</li>
                 </ul>
                 <a href="#" class="pricing-btn secondary">お問い合わせ</a>
@@ -723,14 +1316,17 @@
 
             <div class="pricing-card">
                 <h3>Enterprise</h3>
-                <p style="color: var(--text-secondary);">大企業向け</p>
-                <div class="price">要相談</div>
+                <p class="pricing-description">大企業・高セキュリティ要件向け</p>
+                <div class="pricing-price">
+                    <span class="price-value">要相談</span>
+                </div>
                 <ul class="pricing-features">
                     <li>自己ホスト対応</li>
                     <li>SSO/SAML連携</li>
                     <li>専任サポート担当</li>
                     <li>SOC 2 Type II準拠</li>
                     <li>カスタム開発</li>
+                    <li>オンプレミス対応</li>
                 </ul>
                 <a href="#" class="pricing-btn secondary">お問い合わせ</a>
             </div>
@@ -740,33 +1336,31 @@
     <!-- Security Section -->
     <section id="security" class="security">
         <div class="security-content">
-            <h2 class="section-title">セキュリティ & プライバシー</h2>
-            <p class="section-subtitle">あなたのコードは安全です</p>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">
-                DevBuddyAIはコードのプライバシーを最優先に設計されています。
-                処理後のコードは即座に破棄され、保存されることはありません。
-                Enterprise版では、コードが社外ネットワークに出ることは一切ありません。
-            </p>
+            <div class="section-header">
+                <span class="section-label">セキュリティ</span>
+                <h2 class="section-title">あなたのコードは安全です</h2>
+                <p class="section-subtitle">プライバシーファーストの設計。処理後のコードは即座に破棄。</p>
+            </div>
             <div class="security-badges">
                 <div class="security-badge">
-                    <div class="security-badge-icon">&#128274;</div>
-                    <div>
-                        <strong>TLS 1.3暗号化</strong>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary);">通信は完全暗号化</p>
+                    <div class="security-badge-icon">🔒</div>
+                    <div class="security-badge-text">
+                        <h4>TLS 1.3暗号化</h4>
+                        <p>すべての通信は完全暗号化</p>
                     </div>
                 </div>
                 <div class="security-badge">
-                    <div class="security-badge-icon">&#128187;</div>
-                    <div>
-                        <strong>自己ホスト対応</strong>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Enterprise版で利用可</p>
+                    <div class="security-badge-icon">🏢</div>
+                    <div class="security-badge-text">
+                        <h4>自己ホスト対応</h4>
+                        <p>Enterprise版で完全オンプレ</p>
                     </div>
                 </div>
                 <div class="security-badge">
-                    <div class="security-badge-icon">&#9989;</div>
-                    <div>
-                        <strong>SOC 2準拠</strong>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Enterprise版</p>
+                    <div class="security-badge-icon">✅</div>
+                    <div class="security-badge-text">
+                        <h4>SOC 2準拠</h4>
+                        <p>Enterprise版で利用可能</p>
                     </div>
                 </div>
             </div>
@@ -775,35 +1369,42 @@
 
     <!-- CTA Section -->
     <section class="cta">
-        <h2>今すぐDevBuddyAIを始めよう</h2>
-        <p>無料プランでAIコードレビューを体験してください。</p>
-        <div class="hero-buttons">
-            <a href="https://github.com/masuda-hikari/DevBuddyAI" class="btn-primary" target="_blank">
-                GitHub で無料で始める
-            </a>
+        <div class="cta-container">
+            <h2>今すぐ始めよう</h2>
+            <p>無料プランで、AIコードレビューの威力を体験してください。<br>クレジットカード不要。5分でセットアップ完了。</p>
+            <div class="hero-buttons">
+                <a href="https://github.com/masuda-hikari/DevBuddyAI" class="btn-primary" target="_blank">
+                    ⚡ GitHub で無料で始める
+                </a>
+            </div>
         </div>
     </section>
 
     <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <div class="footer-section">
-                <h4>DevBuddyAI</h4>
-                <p style="color: var(--text-secondary);">AIペアプログラマーで<br>開発効率を最大化</p>
+            <div class="footer-brand">
+                <a href="#" class="logo">
+                    <span class="logo-icon">🤖</span>
+                    <span>DevBuddyAI</span>
+                </a>
+                <p>AIペアプログラマーで開発効率を最大化。バグを減らし、テストを増やし、より良いコードを。</p>
             </div>
             <div class="footer-section">
                 <h4>プロダクト</h4>
                 <ul>
                     <li><a href="#features">機能</a></li>
                     <li><a href="#pricing">料金</a></li>
+                    <li><a href="#security">セキュリティ</a></li>
                     <li><a href="https://github.com/masuda-hikari/DevBuddyAI" target="_blank">GitHub</a></li>
                 </ul>
             </div>
             <div class="footer-section">
-                <h4>ドキュメント</h4>
+                <h4>リソース</h4>
                 <ul>
                     <li><a href="PYPI_PUBLISH_GUIDE.md">インストールガイド</a></li>
-                    <li><a href="https://github.com/masuda-hikari/DevBuddyAI#readme" target="_blank">README</a></li>
+                    <li><a href="https://github.com/masuda-hikari/DevBuddyAI#readme" target="_blank">ドキュメント</a></li>
+                    <li><a href="DEPLOY_GUIDE.md">デプロイガイド</a></li>
                 </ul>
             </div>
             <div class="footer-section">
@@ -811,12 +1412,17 @@
                 <ul>
                     <li><a href="privacy.html">プライバシーポリシー</a></li>
                     <li><a href="terms.html">利用規約</a></li>
-                    <li><a href="legal.html">特定商取引法に基づく表記</a></li>
+                    <li><a href="legal.html">特定商取引法表記</a></li>
                 </ul>
             </div>
         </div>
         <div class="footer-bottom">
             <p>&copy; 2026 DevBuddyAI. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="privacy.html">プライバシー</a>
+                <a href="terms.html">利用規約</a>
+                <a href="https://github.com/masuda-hikari/DevBuddyAI" target="_blank">GitHub</a>
+            </div>
         </div>
     </footer>
 </body>
