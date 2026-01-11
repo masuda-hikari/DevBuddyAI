@@ -66,6 +66,9 @@ _temp_*
 docs_generated/
 site/
 
+# VSCode Extension build artifacts
+*.vsix
+
 # OS固有
 Desktop.ini
 .Spotlight-V100
