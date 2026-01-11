@@ -1,0 +1,40 @@
+# DevBuddyAI Webhook Server Docker Compose
+# 開発・テスト用構成
+
+version: '3.8'
+
+services:
+  webhook-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devbuddy-webhook
+    ports:
+      - "8000:8000"
+    environment:
+      - STRIPE_API_KEY=${STRIPE_API_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - DEVBUDDY_HOST=0.0.0.0
+      - DEVBUDDY_PORT=8000
+      - DEVBUDDY_LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+# 使用方法:
+# 1. .envファイルを作成:
+#    STRIPE_API_KEY=sk_test_xxx
+#    STRIPE_WEBHOOK_SECRET=whsec_xxx
+#
+# 2. ビルドと起動:
+#    docker-compose up -d --build
+#
+# 3. ログ確認:
+#    docker-compose logs -f
+#
+# 4. 停止:
+#    docker-compose down

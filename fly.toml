@@ -1,0 +1,48 @@
+# Fly.io デプロイ設定
+# https://fly.io
+
+app = "devbuddy-webhook"
+primary_region = "nrt"  # 東京リージョン
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8000
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = 10000
+    grace_period = "5s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+    timeout = 2000
+    tls_skip_verify = false
+
+[env]
+  DEVBUDDY_HOST = "0.0.0.0"
+  DEVBUDDY_PORT = "8000"
+  DEVBUDDY_LOG_LEVEL = "INFO"
+
+# デプロイ手順:
+# 1. flyctl auth login
+# 2. flyctl launch (初回のみ)
+# 3. flyctl secrets set STRIPE_API_KEY=sk_xxx STRIPE_WEBHOOK_SECRET=whsec_xxx
+# 4. flyctl deploy

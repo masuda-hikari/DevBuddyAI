@@ -1,0 +1,27 @@
+# Render.com デプロイ設定
+# https://render.com
+
+services:
+  - type: web
+    name: devbuddy-webhook
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free  # または starter, standard
+    healthCheckPath: /health
+    envVars:
+      - key: STRIPE_API_KEY
+        sync: false  # 手動設定
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false  # 手動設定
+      - key: DEVBUDDY_HOST
+        value: "0.0.0.0"
+      - key: DEVBUDDY_LOG_LEVEL
+        value: "INFO"
+    autoDeploy: true
+
+# デプロイ手順:
+# 1. GitHubリポジトリをRenderに接続
+# 2. 環境変数を設定:
+#    - STRIPE_API_KEY
+#    - STRIPE_WEBHOOK_SECRET
+# 3. 自動デプロイが有効

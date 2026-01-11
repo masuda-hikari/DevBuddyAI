@@ -205,7 +205,8 @@ def create_app(
         try:
             plan_enum = Plan(plan)
         except ValueError:
-            raise HTTPException(status_code=404, detail=f"Plan not found: {plan}")
+            msg = f"Plan not found: {plan}"
+            raise HTTPException(status_code=404, detail=msg)
 
         price_info = get_price_info(plan_enum)
         if price_info is None:
@@ -235,15 +236,14 @@ def create_app(
         cancel_url = body.get("cancel_url", "")
 
         if not all([plan_str, email, success_url, cancel_url]):
-            raise HTTPException(
-                status_code=400,
-                detail="Missing required fields: plan, email, success_url, cancel_url"
-            )
+            missing_msg = "Missing: plan, email, success_url, cancel_url"
+            raise HTTPException(status_code=400, detail=missing_msg)
 
         try:
             plan = Plan(plan_str)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid plan: {plan_str}")
+            invalid_msg = f"Invalid plan: {plan_str}"
+            raise HTTPException(status_code=400, detail=invalid_msg)
 
         if plan == Plan.FREE:
             raise HTTPException(
@@ -302,9 +302,9 @@ def create_app(
         # イベント処理
         try:
             result = webhook_handler.handle_event(event)
-            logger.info(
-                f"Webhook processed: {event.get('type')} -> {result.get('action')}"
-            )
+            event_type = event.get('type')
+            action = result.get('action')
+            logger.info(f"Webhook processed: {event_type} -> {action}")
             return result
         except Exception as e:
             logger.error(f"Webhook processing failed: {e}")

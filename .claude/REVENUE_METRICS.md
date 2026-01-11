@@ -45,7 +45,9 @@
 ### Phase 4: 拡張（進行中）
 - [x] バグ修正提案機能強化（複数言語対応・自己検証ループ）
 - [x] ライセンス/認証システム（FREE/PRO/TEAM/ENTERPRISE対応）
-- [ ] 課金連携システム（Stripe）
+- [x] 課金連携システム（Stripe）
+- [x] Webhookサーバー（FastAPI）
+- [x] クラウドデプロイ設定（Railway/Render/Fly.io）
 - [ ] IDE統合（VSCode, JetBrains）
 
 ## 収益化タイムライン
@@ -132,3 +134,9 @@
 | 法務 | 特定商取引法表記 | ✅ |
 | 認証 | ライセンスシステム | ✅ |
 | CLI | license コマンド | ✅ |
+| 課金 | Stripe連携 | ✅ |
+| 課金 | Webhookサーバー | ✅ |
+| CLI | billing コマンド | ✅ |
+| CLI | server コマンド | ✅ |
+| デプロイ | Dockerfile | ✅ |
+| デプロイ | Railway/Render/Fly.io設定 | ✅ |
