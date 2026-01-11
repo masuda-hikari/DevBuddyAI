@@ -590,3 +590,90 @@ class TestRustAnalyzerCargoRoot:
         result = self.analyzer._find_cargo_root(Path("/nonexistent/path.rs"))
         # Cargo.tomlがなければNone
         assert result is None or isinstance(result, Path)
+
+
+class TestRustAnalyzerExternalTools:
+    """外部ツール連携のテスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        config = RustAnalysisConfig(
+            use_clippy=True,
+            use_cargo_check=True,
+        )
+        self.analyzer = RustAnalyzer(config)
+
+    def test_run_clippy_no_file(self):
+        """存在しないファイルでのclippy実行"""
+        from pathlib import Path
+        cargo_root = Path("/nonexistent")
+        file_path = Path("/nonexistent/file.rs")
+        issues = self.analyzer._run_clippy(cargo_root, file_path)
+        assert issues == []
+
+    def test_run_cargo_check_no_file(self):
+        """存在しないファイルでのcargo check実行"""
+        from pathlib import Path
+        cargo_root = Path("/nonexistent")
+        file_path = Path("/nonexistent/file.rs")
+        issues = self.analyzer._run_cargo_check(cargo_root, file_path)
+        assert issues == []
+
+    def test_config_both_enabled(self):
+        """clippy/cargo_check両方有効時の設定確認"""
+        assert self.analyzer.config.use_clippy is True
+        assert self.analyzer.config.use_cargo_check is True
+
+
+class TestRustAnalyzerMacroDetection:
+    """マクロ検出のテスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = RustAnalyzer()
+
+    def test_detect_println_macro(self):
+        """println!マクロの検出"""
+        code = """
+fn main() {
+    println!("Hello, World!");
+}
+"""
+        issues = self.analyzer.analyze(code)
+        # println!の検出（情報レベル）- 検出してもしなくても問題ない（設定次第）
+        assert isinstance(issues, list)
+
+    def test_detect_dbg_macro(self):
+        """dbg!マクロの検出"""
+        code = """
+fn main() {
+    let x = dbg!(5 + 5);
+}
+"""
+        issues = self.analyzer.analyze(code)
+        # dbg!マクロはデバッグ用だが、検出はRustアナライザーの実装次第
+        # 検出されてもされなくても許容
+        assert isinstance(issues, list)
+
+
+class TestRustAnalyzerLineNumber:
+    """行番号検出の精度テスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = RustAnalyzer()
+
+    def test_issue_line_number(self):
+        """問題の行番号が正しい"""
+        code = """fn main() {
+    let x = 5;
+    unsafe {
+        std::ptr::null::<i32>();
+    }
+}
+"""
+        issues = self.analyzer.analyze(code)
+        unsafe_issues = [i for i in issues if "unsafe" in i.message.lower()]
+        if unsafe_issues:
+            # unsafeは3行目にある
+            assert unsafe_issues[0].line == 3

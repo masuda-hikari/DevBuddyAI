@@ -174,3 +174,130 @@ class TestAnalysisConfig:
         assert config.use_mypy is True
         assert config.max_line_length == 80
         assert "E501" in config.ignore_codes
+
+
+class TestPythonAnalyzerFlake8:
+    """flake8連携のテスト"""
+
+    @pytest.fixture
+    def analyzer(self):
+        """アナライザーインスタンス"""
+        config = AnalysisConfig(use_flake8=True)
+        return PythonAnalyzer(config)
+
+    def test_flake8_code_to_level_error(self, analyzer):
+        """E9コードはbug"""
+        level = analyzer._flake8_code_to_level("E901")
+        assert level == "bug"
+
+    def test_flake8_code_to_level_f_error(self, analyzer):
+        """Fコードはbug"""
+        level = analyzer._flake8_code_to_level("F401")
+        assert level == "bug"
+
+    def test_flake8_code_to_level_style(self, analyzer):
+        """Eコード（E9以外）はstyle"""
+        level = analyzer._flake8_code_to_level("E501")
+        assert level == "style"
+
+    def test_flake8_code_to_level_warning(self, analyzer):
+        """Wコードはwarning"""
+        level = analyzer._flake8_code_to_level("W503")
+        assert level == "warning"
+
+    def test_flake8_code_to_level_complexity(self, analyzer):
+        """Cコードはinfo"""
+        level = analyzer._flake8_code_to_level("C901")
+        assert level == "info"
+
+    def test_flake8_code_to_level_unknown(self, analyzer):
+        """不明なコードはinfo"""
+        level = analyzer._flake8_code_to_level("X001")
+        assert level == "info"
+
+    def test_analyze_with_file_flake8_disabled(self):
+        """flake8無効時のコード解析"""
+        config = AnalysisConfig(use_flake8=False, use_mypy=False)
+        analyzer = PythonAnalyzer(config)
+        code = "x = 1\n"
+        issues = analyzer.analyze(code)
+        # 外部ツール無効時は空（パターンベース解析のみ）
+        assert isinstance(issues, list)
+
+    def test_analyze_with_config_ignore_codes(self):
+        """ignore_codes設定テスト"""
+        config = AnalysisConfig(
+            use_flake8=False,
+            use_mypy=False,
+            ignore_codes=["E501", "W503"]
+        )
+        analyzer = PythonAnalyzer(config)
+        assert "E501" in analyzer.config.ignore_codes
+        assert "W503" in analyzer.config.ignore_codes
+
+
+class TestPythonAnalyzerMypy:
+    """mypy連携のテスト（モック）"""
+
+    @pytest.fixture
+    def analyzer_with_mypy(self):
+        """mypy有効アナライザー"""
+        config = AnalysisConfig(use_mypy=True, use_flake8=False)
+        return PythonAnalyzer(config)
+
+    def test_mypy_config_enabled(self, analyzer_with_mypy):
+        """mypy設定が有効"""
+        assert analyzer_with_mypy.config.use_mypy is True
+
+    def test_run_mypy_no_file(self, analyzer_with_mypy):
+        """存在しないファイルでのmypy実行"""
+        from pathlib import Path
+        issues = analyzer_with_mypy._run_mypy(Path("/nonexistent/file.py"))
+        # ファイルが存在しない場合は空リスト
+        assert issues == []
+
+    def test_run_flake8_no_file(self):
+        """存在しないファイルでのflake8実行"""
+        from pathlib import Path
+        config = AnalysisConfig(use_flake8=True, use_mypy=False)
+        analyzer = PythonAnalyzer(config)
+        issues = analyzer._run_flake8(Path("/nonexistent/file.py"))
+        # ファイルが存在しない場合、flake8がエラー出力
+        # 空リストまたはエラー報告のいずれか
+        assert isinstance(issues, list)
+
+
+class TestPythonAnalyzerEdgeCases:
+    """エッジケースのテスト"""
+
+    @pytest.fixture
+    def analyzer(self):
+        """アナライザーインスタンス"""
+        return PythonAnalyzer()
+
+    def test_empty_code(self, analyzer):
+        """空のコード"""
+        issues = analyzer.analyze("")
+        assert isinstance(issues, list)
+
+    def test_whitespace_only(self, analyzer):
+        """空白のみのコード"""
+        issues = analyzer.analyze("   \n\n   ")
+        assert isinstance(issues, list)
+
+    def test_get_functions_syntax_error(self, analyzer):
+        """構文エラーでの関数取得"""
+        functions = analyzer.get_functions("def broken(")
+        assert functions == []
+
+    def test_get_classes_syntax_error(self, analyzer):
+        """構文エラーでのクラス取得"""
+        classes = analyzer.get_classes("class Broken(")
+        assert classes == []
+
+    def test_check_syntax_with_lineno(self, analyzer):
+        """構文エラーの行番号付きメッセージ"""
+        code = "def func():\n    x = ("
+        valid, error = analyzer.check_syntax(code)
+        assert valid is False
+        assert "Line" in error

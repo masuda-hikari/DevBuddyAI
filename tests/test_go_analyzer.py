@@ -623,3 +623,101 @@ func main() {
         imports = self.analyzer.get_imports(code)
         assert "fmt" in imports
         assert "sync" in imports
+
+
+class TestGoAnalyzerExternalTools:
+    """外部ツール連携のテスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        config = GoAnalysisConfig(
+            use_go_vet=True,
+            use_staticcheck=True,
+            use_golangci_lint=True,
+            timeout=30,
+        )
+        self.analyzer = GoAnalyzer(config)
+
+    def test_run_go_vet_no_file(self):
+        """存在しないファイルでのgo vet実行"""
+        from pathlib import Path
+        issues = self.analyzer._run_go_vet(Path("/nonexistent/file.go"))
+        assert issues == []
+
+    def test_run_staticcheck_no_file(self):
+        """存在しないファイルでのstaticcheck実行"""
+        from pathlib import Path
+        issues = self.analyzer._run_staticcheck(Path("/nonexistent/file.go"))
+        assert issues == []
+
+    def test_run_golangci_lint_no_file(self):
+        """存在しないファイルでのgolangci-lint実行"""
+        from pathlib import Path
+        issues = self.analyzer._run_golangci_lint(Path("/nonexistent/file.go"))
+        assert issues == []
+
+    def test_config_all_enabled(self):
+        """全外部ツール有効時の設定確認"""
+        assert self.analyzer.config.use_go_vet is True
+        assert self.analyzer.config.use_staticcheck is True
+        assert self.analyzer.config.use_golangci_lint is True
+
+
+class TestGoAnalyzerMagicNumber:
+    """マジックナンバー検出のテスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = GoAnalyzer()
+
+    def test_detect_magic_number(self):
+        """マジックナンバーの検出"""
+        code = """
+package main
+
+func main() {
+    threshold := 42
+    limit := 100
+}
+"""
+        issues = self.analyzer.analyze(code)
+        magic_issues = [i for i in issues if "Magic number" in i.message]
+        assert len(magic_issues) >= 1
+
+    def test_no_magic_number_small(self):
+        """小さい数値は検出しない"""
+        code = """
+package main
+
+func main() {
+    x := 0
+    y := 1
+    z := 2
+}
+"""
+        issues = self.analyzer.analyze(code)
+        # 0, 1, 2 はマジックナンバーとして検出しない
+        magic_issues = [i for i in issues if "Magic number" in i.message]
+        assert len(magic_issues) == 0
+
+
+class TestGoAnalyzerLineNumber:
+    """行番号検出の精度テスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = GoAnalyzer()
+
+    def test_issue_line_number(self):
+        """問題の行番号が正しい"""
+        code = """package main
+
+func main() {
+    panic("test")
+}
+"""
+        issues = self.analyzer.analyze(code)
+        panic_issues = [i for i in issues if "panic()" in i.message]
+        assert len(panic_issues) == 1
+        # panic は4行目にある
+        assert panic_issues[0].line == 4
