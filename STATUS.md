@@ -5,8 +5,8 @@
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
 - 進捗: Phase 1-2完了、Phase 3-4進行中
-- **NEW**: ランディングページ刷新（モダンデザイン・日本円価格表示）
-- VSCode拡張ビルド確認済み
+- **NEW**: VSCode拡張vsixパッケージ作成成功
+- VSCode Marketplace公開準備完了
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -105,6 +105,11 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - または: Actions → Publish this action to the Marketplace
 
 ## 最近の変更
+- 2026-01-11: **VSCode拡張vsixパッケージ作成成功**
+  - tsconfig.json修正（declaration無効化）
+  - PNGアイコン生成
+  - LICENSEファイル追加
+  - vsce package成功（devbuddy-ai-0.1.0.vsix）
 - 2026-01-11: **ランディングページ刷新**
   - モダンなグラデーションデザイン
   - 日本円価格表示（Pro: ¥1,980/月、Team: ¥9,800/月）
