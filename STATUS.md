@@ -1,11 +1,13 @@
 ﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿# DevBuddyAI - ステータス
 
-最終更新: 2026-01-11
+最終更新: 2026-01-12
 
 ## 現在の状態
-- 状態: PyPI公開待機中（Trusted Publisher設定待ち）
+- 状態: **v0.1.0リリースタグ作成完了**
 - 進捗: Phase 1-2完了、Phase 3-4進行中
-- **NEW**: テストカバレッジ**85%**達成、**601件**テスト合格（+32件追加）
+- **NEW**: GitHubリリースタグv0.1.0プッシュ完了
+- **NEW**: CHANGELOG.md作成完了
+- テストカバレッジ**85%**達成、**601件**テスト合格
 - rust_analyzer.py 76%、go_analyzer.py 77%カバレッジ向上
 - billing.py 96%、fixer.py 88%カバレッジ達成
 - VSCode拡張vsixパッケージ作成成功
@@ -98,20 +100,23 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 1. **PyPI Trusted Publisher設定**（人間の作業）
    - https://pypi.org → Publishing → Add pending publisher
    - 詳細: docs/PYPI_PUBLISH_GUIDE.md
-2. **GitHubリリースタグv0.1.0作成**
-   - タグ作成 → GitHub Actions自動公開
-   - **Marketplace公開**: リリース時に「Publish this Action to GitHub Marketplace」をチェック
+2. **GitHubリリース作成**（人間の作業）
+   - タグv0.1.0からリリースを作成
+   - **Marketplace公開**: リリース作成時に「Publish this Action to GitHub Marketplace」をチェック
 3. **PyPI公開後の動作確認**
    - `pip install devbuddy-ai`
    - `devbuddy --version`
 4. **GitHub Pages有効化**（人間の作業）
    - リポジトリSettings → Pages → Source: GitHub Actions
    - ワークフロー: pages.yml
-5. **GitHub Marketplace公開**（人間の作業）
-   - リリースv0.1.0作成時に自動的にMarketplaceオプションが表示される
-   - または: Actions → Publish this action to the Marketplace
+5. **VSCode Marketplace公開**（人間の作業）
+   - vscode-extension/devbuddy-ai-0.1.0.vsixをアップロード
 
 ## 最近の変更
+- 2026-01-12: **v0.1.0リリースタグ作成・プッシュ**
+  - CHANGELOG.md作成
+  - GitHubタグv0.1.0プッシュ
+  - PyPI/Marketplace公開準備完了
 - 2026-01-11: **テストカバレッジ85%達成（+32件テスト追加）**
   - rust_analyzer.py: 69%→76%（+7%向上）
   - go_analyzer.py: 73%→77%（+4%向上）
