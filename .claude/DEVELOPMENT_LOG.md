@@ -1,5 +1,46 @@
 # DevBuddyAI 開発ログ
 
+## 2026-01-11 セッション（テストカバレッジ向上）
+
+### 完了タスク
+1. **CLI テストカバレッジ向上**
+   - TestLicenseCommands: ライセンス管理コマンドのテスト追加
+   - TestBillingCommands: 課金コマンドのテスト追加
+   - TestServerCommands: サーバー管理コマンドのテスト追加
+   - TestReviewFormats: JSON/Markdown出力形式のテスト追加
+   - TestTestgenFormats: テスト生成出力形式のテスト追加
+   - TestFixFormats: 修正提案出力形式のテスト追加
+
+2. **Generator テストカバレッジ向上**
+   - TestTestVerificationReport: 検証レポートのテスト追加
+   - TestParseTestOutput: pytest出力パースのテスト追加
+   - TestBuildErrorContext: エラーコンテキスト構築のテスト追加
+   - TestGenerateAndVerify: 自己検証ループのテスト追加
+   - TestLicenseCheck: ライセンスチェックのテスト追加
+
+3. **品質確認**
+   - テストカバレッジ: 71% → 78%（7%改善）
+   - テスト数: 464件 → 496件（+32件）
+   - flake8: 0 errors
+   - mypy: 0 errors (24 source files)
+
+### 変更ファイル一覧
+- tests/test_cli.py（+349行）
+- tests/test_generator.py（+348行）
+- STATUS.md
+- .claude/DEVELOPMENT_LOG.md
+
+### 収益化リンク
+- テストカバレッジ向上 → 品質保証・バグ検出率向上 → 有料プランの信頼性向上
+
+### 次回タスク
+1. PyPI Trusted Publisher設定（人間の作業）
+2. GitHub Pages有効化（人間の作業）
+3. VSCode Marketplace公開（人間の作業）
+4. GitHubリリースタグv0.1.0作成
+
+---
+
 ## 2026-01-11 セッション（E2Eテスト追加・__main__.py作成）
 
 ### 完了タスク
