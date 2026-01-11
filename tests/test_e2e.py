@@ -372,6 +372,21 @@ class TestModuleExecution:
         )
         assert result.returncode == 0
 
+    def test_main_module_import(self):
+        """__main__.py のインポート確認"""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from devbuddy import __main__; print('OK')",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=PROJECT_ROOT,
+        )
+        assert result.returncode == 0
+        assert "OK" in result.stdout
+
     def test_direct_cli_import(self):
         """CLIモジュールの直接インポート"""
         result = subprocess.run(
@@ -449,3 +464,44 @@ class TestModuleExecution:
                 cwd=PROJECT_ROOT,
             )
             assert result.returncode == 0, f"{module} のインポートに失敗"
+
+
+class TestMainModule:
+    """__main__.py のテスト"""
+
+    def test_main_module_execution(self):
+        """python -m devbuddy --version で実行"""
+        result = subprocess.run(
+            [sys.executable, "-m", "devbuddy", "--version"],
+            capture_output=True,
+            text=True,
+            cwd=PROJECT_ROOT,
+        )
+        assert result.returncode == 0
+        assert "devbuddy" in result.stdout.lower()
+
+    def test_main_module_help(self):
+        """python -m devbuddy --help で実行"""
+        result = subprocess.run(
+            [sys.executable, "-m", "devbuddy", "--help"],
+            capture_output=True,
+            text=True,
+            cwd=PROJECT_ROOT,
+        )
+        assert result.returncode == 0
+        assert "review" in result.stdout
+        assert "testgen" in result.stdout
+
+    def test_main_module_cli_import(self):
+        """__main__.pyからcliをインポート"""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from devbuddy.__main__ import *; print('OK')",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=PROJECT_ROOT,
+        )
+        assert result.returncode == 0
