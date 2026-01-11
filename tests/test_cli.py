@@ -524,3 +524,352 @@ class TestCLI:
             assert "review:" in content
             assert "testgen:" in content
             assert "ignore_patterns:" in content
+
+
+class TestLicenseCommands:
+    """ライセンスコマンドのテスト"""
+
+    @pytest.fixture
+    def runner(self):
+        """CLIランナー"""
+        return CliRunner()
+
+    def test_license_status(self, runner, tmp_path):
+        """ライセンス状態表示"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["license", "status"])
+
+            assert result.exit_code == 0
+            assert "License Status" in result.output
+
+    @patch("devbuddy.cli.LicenseManager")
+    def test_license_status_with_active(
+        self, mock_manager_class, runner, tmp_path
+    ):
+        """アクティブライセンスの状態表示"""
+        from devbuddy.core.licensing import Plan
+
+        mock_license = MagicMock()
+        mock_license.plan = Plan.PRO
+        mock_license.email = "test@example.com"
+        mock_license.expires_at = None
+        mock_license.is_valid = True
+        mock_license.is_expired.return_value = False
+
+        mock_manager = MagicMock()
+        mock_manager.get_license.return_value = mock_license
+        mock_manager.get_usage_summary.return_value = {
+            "month": "2026-01",
+            "reviews": 10,
+            "testgens": 5,
+            "fixes": 2,
+            "max_file_lines": 2000,
+            "features": {
+                "private_repos": True,
+                "github_integration": True,
+                "priority_support": False,
+            },
+        }
+        mock_manager_class.return_value = mock_manager
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["license", "status"])
+
+            assert result.exit_code == 0
+            assert "PRO" in result.output
+
+    def test_license_usage(self, runner, tmp_path):
+        """利用状況表示"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["license", "usage"])
+
+            assert result.exit_code == 0
+            assert "Usage" in result.output
+
+    @patch("devbuddy.cli.LicenseManager")
+    def test_license_activate_success(
+        self, mock_manager_class, runner, tmp_path
+    ):
+        """ライセンスアクティベート成功"""
+        from devbuddy.core.licensing import Plan
+
+        mock_license = MagicMock()
+        mock_license.plan = Plan.PRO
+        mock_license.email = "test@example.com"
+        mock_license.get_limits.return_value = MagicMock(
+            reviews_per_month=500,
+            max_file_lines=2000,
+            private_repos=True,
+            github_integration=True,
+        )
+
+        mock_manager = MagicMock()
+        mock_manager.activate.return_value = mock_license
+        mock_manager_class.return_value = mock_manager
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            key = "DB-PRO-test"
+            result = runner.invoke(
+                cli,
+                ["license", "activate", "--key", key, "--email", "t@t.com"]
+            )
+
+            assert result.exit_code == 0
+            assert "activated" in result.output
+
+    @patch("devbuddy.cli.LicenseManager")
+    def test_license_activate_failure(
+        self, mock_manager_class, runner, tmp_path
+    ):
+        """ライセンスアクティベート失敗"""
+        from devbuddy.core.licensing import LicenseError
+
+        mock_manager = MagicMock()
+        mock_manager.activate.side_effect = LicenseError("Invalid key")
+        mock_manager_class.return_value = mock_manager
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(
+                cli,
+                ["license", "activate", "--key", "inv", "--email", "t@t.com"]
+            )
+
+            assert result.exit_code == 0
+            assert "failed" in result.output
+
+    @patch("devbuddy.cli.LicenseManager")
+    def test_license_deactivate(self, mock_manager_class, runner, tmp_path):
+        """ライセンス無効化"""
+        mock_manager = MagicMock()
+        mock_manager_class.return_value = mock_manager
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(
+                cli, ["license", "deactivate"], input="y\n"
+            )
+
+            assert result.exit_code == 0
+            assert "deactivated" in result.output
+
+
+class TestBillingCommands:
+    """課金コマンドのテスト"""
+
+    @pytest.fixture
+    def runner(self):
+        """CLIランナー"""
+        return CliRunner()
+
+    def test_billing_plans(self, runner, tmp_path):
+        """プラン一覧表示"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["billing", "plans"])
+
+            assert result.exit_code == 0
+            assert "FREE" in result.output
+            assert "PRO" in result.output or "Pro" in result.output
+
+    def test_billing_status_free(self, runner, tmp_path):
+        """無料プランの課金状態"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["billing", "status"])
+
+            assert result.exit_code == 0
+            assert "Billing Status" in result.output
+
+    @patch.dict("os.environ", {"STRIPE_API_KEY": ""})
+    def test_billing_upgrade_no_stripe_key(self, runner, tmp_path):
+        """Stripeキーなしでアップグレード"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            email = "test@example.com"
+            result = runner.invoke(
+                cli,
+                ["billing", "upgrade", "pro", "--email", email]
+            )
+
+            assert result.exit_code == 0
+            has_key = "STRIPE_API_KEY" in result.output
+            has_stripe = "Stripe" in result.output
+            assert has_key or has_stripe
+
+    @patch("devbuddy.cli.LicenseManager")
+    def test_billing_cancel_free_plan(
+        self, mock_manager_class, runner, tmp_path
+    ):
+        """無料プランでキャンセル"""
+        from devbuddy.core.licensing import Plan
+
+        mock_license = MagicMock()
+        mock_license.plan = Plan.FREE
+
+        mock_manager = MagicMock()
+        mock_manager.get_license.return_value = mock_license
+        mock_manager_class.return_value = mock_manager
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["billing", "cancel"], input="y\n")
+
+            assert result.exit_code == 0
+            assert "有料プランに加入していません" in result.output
+
+
+class TestServerCommands:
+    """サーバーコマンドのテスト"""
+
+    @pytest.fixture
+    def runner(self):
+        """CLIランナー"""
+        return CliRunner()
+
+    def test_server_info(self, runner, tmp_path):
+        """サーバー情報表示"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["server", "info"])
+
+            assert result.exit_code == 0
+            assert "Server Configuration" in result.output
+
+    @patch.dict("os.environ", {"STRIPE_API_KEY": "sk_test_123"})
+    def test_server_info_with_key(self, runner, tmp_path):
+        """Stripeキーありでサーバー情報表示"""
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            result = runner.invoke(cli, ["server", "info"])
+
+            assert result.exit_code == 0
+            assert "sk_test" in result.output
+
+
+class TestReviewFormats:
+    """レビュー出力形式のテスト"""
+
+    @pytest.fixture
+    def runner(self):
+        """CLIランナー"""
+        return CliRunner()
+
+    @patch.dict("os.environ", {"DEVBUDDY_API_KEY": "test-key"})
+    @patch("devbuddy.cli.CodeReviewer")
+    def test_review_json_format(
+        self, mock_reviewer_class, runner, tmp_path
+    ):
+        """JSON形式でのレビュー出力"""
+        from devbuddy.core.models import ReviewResult
+
+        mock_reviewer = MagicMock()
+        mock_result = ReviewResult(
+            file_path=str(tmp_path / "test.py"),
+            issues=[],
+            success=True,
+        )
+        mock_reviewer.review_file.return_value = mock_result
+        mock_reviewer_class.return_value = mock_reviewer
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("test.py", "w") as f:
+                f.write("x = 1")
+
+            result = runner.invoke(cli, ["review", "test.py", "-f", "json"])
+
+            assert result.exit_code == 0
+
+    @patch.dict("os.environ", {"DEVBUDDY_API_KEY": "test-key"})
+    @patch("devbuddy.cli.CodeReviewer")
+    def test_review_markdown_format(
+        self, mock_reviewer_class, runner, tmp_path
+    ):
+        """Markdown形式でのレビュー出力"""
+        from devbuddy.core.models import ReviewResult
+
+        mock_reviewer = MagicMock()
+        fp = str(tmp_path / "test.py")
+        mock_result = ReviewResult(file_path=fp, issues=[], success=True)
+        mock_reviewer.review_file.return_value = mock_result
+        mock_reviewer_class.return_value = mock_reviewer
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("test.py", "w") as f:
+                f.write("x = 1")
+
+            cmd = ["review", "test.py", "-f", "markdown"]
+            result = runner.invoke(cli, cmd)
+
+            assert result.exit_code == 0
+
+
+class TestTestgenFormats:
+    """テスト生成出力形式のテスト"""
+
+    @pytest.fixture
+    def runner(self):
+        """CLIランナー"""
+        return CliRunner()
+
+    @patch.dict("os.environ", {"DEVBUDDY_API_KEY": "test-key"})
+    @patch("devbuddy.cli.CodeTestGenerator")
+    def test_testgen_json_format(self, mock_gen_class, runner, tmp_path):
+        """JSON形式でのテスト生成出力"""
+        from devbuddy.core.generator import GenerationResult
+
+        mock_gen = MagicMock()
+        mock_result = GenerationResult(
+            success=True,
+            test_code="def test_foo(): pass",
+            test_count=1,
+        )
+        mock_gen.generate_tests.return_value = mock_result
+        mock_gen_class.return_value = mock_gen
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("calc.py", "w") as f:
+                f.write("def add(a, b): return a + b")
+
+            result = runner.invoke(cli, ["testgen", "calc.py", "-f", "json"])
+
+            assert result.exit_code == 0
+
+
+class TestFixFormats:
+    """修正提案出力形式のテスト"""
+
+    @pytest.fixture
+    def runner(self):
+        """CLIランナー"""
+        return CliRunner()
+
+    @patch.dict("os.environ", {"DEVBUDDY_API_KEY": "test-key"})
+    @patch("devbuddy.cli.BugFixer")
+    def test_fix_json_format(self, mock_fixer_class, runner, tmp_path):
+        """JSON形式での修正提案出力"""
+        from devbuddy.core.fixer import FixResult
+
+        mock_fixer = MagicMock()
+        mock_result = FixResult(success=True, suggestions=[])
+        mock_fixer.suggest_fix.return_value = mock_result
+        mock_fixer_class.return_value = mock_fixer
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("test.py", "w") as f:
+                f.write("def test_foo(): pass")
+
+            result = runner.invoke(cli, ["fix", "test.py", "-f", "json"])
+
+            assert result.exit_code == 0
+
+    @patch.dict("os.environ", {"DEVBUDDY_API_KEY": "test-key"})
+    @patch("devbuddy.cli.BugFixer")
+    def test_fix_with_output_file(self, mock_fixer_class, runner, tmp_path):
+        """結果をファイルに出力"""
+        mock_fixer = MagicMock()
+        mock_fixer.suggest_fix.return_value = MagicMock(suggestions=[])
+        mock_fixer_class.return_value = mock_fixer
+
+        with runner.isolated_filesystem(temp_dir=tmp_path):
+            with open("test.py", "w") as f:
+                f.write("def test_foo(): pass")
+
+            result = runner.invoke(
+                cli, ["fix", "test.py", "-o", "result.txt"]
+            )
+
+            assert result.exit_code == 0
+            assert "saved to" in result.output
