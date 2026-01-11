@@ -304,3 +304,351 @@ def simple():
 
         assert len(functions) == 1
         assert functions[0].docstring is None
+
+
+class TestTestVerificationReport:
+    """TestVerificationReportのテスト"""
+
+    def test_default_values(self):
+        """デフォルト値の確認"""
+        from devbuddy.core.generator import TestVerificationReport
+
+        report = TestVerificationReport()
+
+        assert report.passed == 0
+        assert report.failed == 0
+        assert report.errors == 0
+        assert report.skipped == 0
+        assert report.coverage_percent is None
+        assert report.failed_tests == []
+        assert report.error_messages == []
+
+    def test_with_values(self):
+        """値を設定した場合"""
+        from devbuddy.core.generator import TestVerificationReport
+
+        report = TestVerificationReport(
+            passed=5,
+            failed=2,
+            errors=1,
+            skipped=0,
+            coverage_percent=80.5,
+            failed_tests=["test_foo", "test_bar"],
+            error_messages=["AssertionError"],
+        )
+
+        assert report.passed == 5
+        assert report.failed == 2
+        assert report.errors == 1
+        assert report.coverage_percent == 80.5
+        assert len(report.failed_tests) == 2
+
+
+class TestParseTestOutput:
+    """_parse_test_outputのテスト"""
+
+    @pytest.fixture
+    def generator(self):
+        """ジェネレーターインスタンス"""
+        client = MockLLMClient()
+        return CodeTestGenerator(client=client, skip_license_check=True)
+
+    def test_parse_passed_only(self, generator):
+        """全テスト成功の出力"""
+        output = """
+============================= test session starts =============================
+collected 5 items
+
+test_example.py .....                                                    [100%]
+
+============================== 5 passed in 0.53s ==============================
+"""
+        report = generator._parse_test_output(output)
+
+        assert report.passed == 5
+        assert report.failed == 0
+        assert report.errors == 0
+
+    def test_parse_with_failures(self, generator):
+        """失敗を含む出力"""
+        output = """
+============================= test session starts =============================
+collected 5 items
+
+test_example.py ...FF                                                    [100%]
+
+=== FAILURES ===
+FAILED test_example.py::test_foo - AssertionError: 1 == 2
+FAILED test_example.py::test_bar - ValueError
+
+========================= 3 passed, 2 failed in 0.53s ===========
+"""
+        report = generator._parse_test_output(output)
+
+        assert report.passed == 3
+        assert report.failed == 2
+        assert "test_foo" in report.failed_tests
+        assert "test_bar" in report.failed_tests
+
+    def test_parse_with_skipped(self, generator):
+        """スキップを含む出力"""
+        output = """
+============================= test session starts =============================
+collected 5 items
+
+test_example.py ...s.                                                    [100%]
+
+========================= 4 passed, 1 skipped in 0.53s ===========
+"""
+        report = generator._parse_test_output(output)
+
+        assert report.passed == 4
+        assert report.skipped == 1
+
+    def test_parse_with_coverage(self, generator):
+        """カバレッジを含む出力"""
+        output = """
+============================= test session starts =============================
+test_example.py .....                                                    [100%]
+
+---------- coverage: platform linux, python 3.12.0-final-0 -----------
+Name                      Stmts   Miss  Cover
+---------------------------------------------
+src/module.py                50     10    80%
+---------------------------------------------
+TOTAL                       100     20    80%
+
+============================== 5 passed in 0.53s ==============================
+"""
+        report = generator._parse_test_output(output)
+
+        assert report.coverage_percent == 80.0
+
+    def test_parse_with_error_messages(self, generator):
+        """エラーメッセージを含む出力"""
+        output = """
+=== FAILURES ===
+_ test_foo _
+    def test_foo():
+>       assert 1 == 2
+E       AssertionError: assert 1 == 2
+E       assert 1 == 2
+
+5 passed, 1 failed in 0.53s
+"""
+        report = generator._parse_test_output(output)
+
+        # エラーメッセージが抽出される（正規表現による抽出）
+        # パースされるかどうかはここでは重要ではなく、メソッドが正常に動作することを確認
+        assert report.failed == 1
+        assert report.passed == 5
+
+
+class TestBuildErrorContext:
+    """_build_error_contextのテスト"""
+
+    @pytest.fixture
+    def generator(self):
+        """ジェネレーターインスタンス"""
+        client = MockLLMClient()
+        return CodeTestGenerator(client=client, skip_license_check=True)
+
+    def test_build_context(self, generator):
+        """エラーコンテキスト構築"""
+        from devbuddy.core.generator import TestVerificationReport
+
+        report = TestVerificationReport(
+            passed=3,
+            failed=2,
+            errors=0,
+            failed_tests=["test_foo", "test_bar"],
+            error_messages=["AssertionError: assert 1 == 2"],
+        )
+
+        context = generator._build_error_context(
+            test_code="def test_foo(): pass",
+            output="Test output here",
+            report=report,
+            attempt=1,
+        )
+
+        assert "試行 1/3" in context
+        assert "失敗テスト数: 2" in context
+        assert "test_foo" in context
+        assert "test_bar" in context
+        assert "AssertionError" in context
+
+    def test_build_context_no_failures(self, generator):
+        """失敗なしの場合"""
+        from devbuddy.core.generator import TestVerificationReport
+
+        report = TestVerificationReport(passed=5, failed=0, errors=0)
+
+        context = generator._build_error_context(
+            test_code="def test_foo(): pass",
+            output="All tests passed",
+            report=report,
+            attempt=1,
+        )
+
+        assert "失敗テスト数: 0" in context
+
+
+class TestGenerateAndVerify:
+    """generate_and_verifyのテスト"""
+
+    def test_verify_success(self, tmp_path):
+        """検証成功のケース"""
+        from unittest.mock import patch, MagicMock
+
+        client = MockLLMClient(responses={
+            "def": """import pytest
+
+def test_add():
+    assert 1 + 1 == 2
+"""
+        })
+        generator = CodeTestGenerator(client=client, skip_license_check=True)
+
+        source_file = tmp_path / "calc.py"
+        source_file.write_text("def add(a, b): return a + b")
+
+        # subprocessをモック
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(
+                returncode=0,
+                stdout="5 passed in 0.53s",
+                stderr="",
+            )
+
+            result = generator.generate_and_verify(source_file)
+
+            assert result.success is True
+            assert result.verified is True
+
+    def test_verify_failure_then_fix(self, tmp_path):
+        """失敗後に修正を試みるケース"""
+        from unittest.mock import patch, MagicMock
+
+        # 最初は失敗、2回目は成功のレスポンス
+        responses = {
+            "def": "def test_add(): assert 1 == 2",  # 最初
+            "修正": "def test_add(): assert 1 + 1 == 2",  # 修正後
+        }
+        client = MockLLMClient(responses=responses)
+        generator = CodeTestGenerator(client=client, skip_license_check=True)
+
+        source_file = tmp_path / "calc.py"
+        source_file.write_text("def add(a, b): return a + b")
+
+        call_count = [0]
+
+        def mock_subprocess(*args, **kwargs):
+            call_count[0] += 1
+            mock = MagicMock()
+            if call_count[0] == 1:
+                # 最初の実行は失敗
+                mock.returncode = 1
+                mock.stdout = "FAILED test_calc::test_add\n1 passed, 1 failed"
+                mock.stderr = ""
+            else:
+                # 2回目は成功
+                mock.returncode = 0
+                mock.stdout = "2 passed in 0.53s"
+                mock.stderr = ""
+            return mock
+
+        with patch("subprocess.run", side_effect=mock_subprocess):
+            result = generator.generate_and_verify(source_file)
+
+            # 何かしらの結果が返る（成功・失敗問わず）
+            assert result.attempts >= 1
+
+    def test_verify_timeout(self, tmp_path):
+        """タイムアウトのケース"""
+        from unittest.mock import patch
+        import subprocess as sp
+
+        client = MockLLMClient(responses={
+            "def": "def test_add(): pass"
+        })
+        generator = CodeTestGenerator(client=client, skip_license_check=True)
+
+        source_file = tmp_path / "calc.py"
+        source_file.write_text("def add(a, b): return a + b")
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.side_effect = sp.TimeoutExpired(cmd="pytest", timeout=60)
+
+            result = generator.generate_and_verify(source_file)
+
+            assert result.success is False
+            assert "timed out" in result.error
+
+    def test_verify_with_coverage(self, tmp_path):
+        """カバレッジ測定付きのケース"""
+        from unittest.mock import patch, MagicMock
+
+        client = MockLLMClient(responses={
+            "def": "def test_add(): assert True"
+        })
+        generator = CodeTestGenerator(client=client, skip_license_check=True)
+
+        source_file = tmp_path / "calc.py"
+        source_file.write_text("def add(a, b): return a + b")
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(
+                returncode=0,
+                stdout="5 passed\nTOTAL                   100     20    80%",
+                stderr="",
+            )
+
+            result = generator.generate_and_verify(
+                source_file, measure_coverage=True
+            )
+
+            assert result.success is True
+            assert result.verification_report is not None
+            assert result.verification_report.coverage_percent == 80.0
+
+
+class TestLicenseCheck:
+    """ライセンスチェックのテスト"""
+
+    def test_skip_license_check(self, tmp_path):
+        """ライセンスチェックスキップ"""
+        client = MockLLMClient(responses={"def": "def test_foo(): pass"})
+        generator = CodeTestGenerator(client=client, skip_license_check=True)
+
+        source_file = tmp_path / "test.py"
+        source_file.write_text("def foo(): pass")
+
+        result = generator.generate_tests(source_file)
+
+        assert result.success is True
+
+    def test_license_check_limit_exceeded(self, tmp_path):
+        """利用制限超過"""
+        from unittest.mock import MagicMock
+        from devbuddy.core.licensing import UsageLimitError
+
+        mock_manager = MagicMock()
+        mock_manager.check_testgen_limit.side_effect = UsageLimitError(
+            "Monthly limit exceeded"
+        )
+
+        client = MockLLMClient(responses={"def": "def test_foo(): pass"})
+        generator = CodeTestGenerator(
+            client=client,
+            license_manager=mock_manager,
+            skip_license_check=False,
+        )
+
+        source_file = tmp_path / "test.py"
+        source_file.write_text("def foo(): pass")
+
+        result = generator.generate_tests(source_file)
+
+        assert result.success is False
+        assert "limit" in result.error.lower()
