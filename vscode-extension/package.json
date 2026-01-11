@@ -1,0 +1,212 @@
+{
+  "name": "devbuddy-ai",
+  "displayName": "DevBuddyAI",
+  "description": "AI開発者支援ツール - コードレビュー、テスト生成、バグ修正提案を自動化",
+  "version": "0.1.0",
+  "publisher": "masuda-hikari",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Testing",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "code review",
+    "test generation",
+    "bug fix",
+    "developer tools"
+  ],
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:rust",
+    "onLanguage:go"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "devbuddy.reviewFile",
+        "title": "DevBuddyAI: コードレビュー（現在のファイル）",
+        "icon": "$(search)"
+      },
+      {
+        "command": "devbuddy.reviewSelection",
+        "title": "DevBuddyAI: コードレビュー（選択範囲）",
+        "icon": "$(search)"
+      },
+      {
+        "command": "devbuddy.generateTests",
+        "title": "DevBuddyAI: テスト生成",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "devbuddy.suggestFix",
+        "title": "DevBuddyAI: バグ修正提案",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "devbuddy.setApiKey",
+        "title": "DevBuddyAI: APIキー設定",
+        "icon": "$(key)"
+      },
+      {
+        "command": "devbuddy.showUsage",
+        "title": "DevBuddyAI: 利用状況表示",
+        "icon": "$(graph)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "devbuddy.reviewSelection",
+          "when": "editorHasSelection",
+          "group": "devbuddy"
+        },
+        {
+          "command": "devbuddy.suggestFix",
+          "when": "editorHasSelection",
+          "group": "devbuddy"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "devbuddy.reviewFile",
+          "when": "resourceLangId == python || resourceLangId == javascript || resourceLangId == typescript || resourceLangId == rust || resourceLangId == go",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DevBuddyAI",
+      "properties": {
+        "devbuddy.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "DevBuddyAI APIキー（環境変数DEVBUDDY_API_KEYでも設定可）",
+          "scope": "machine"
+        },
+        "devbuddy.model": {
+          "type": "string",
+          "enum": ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku", "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"],
+          "default": "claude-3-sonnet",
+          "description": "使用するAIモデル"
+        },
+        "devbuddy.severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "default": "medium",
+          "description": "レビューの厳格さレベル"
+        },
+        "devbuddy.autoReviewOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "ファイル保存時に自動レビューを実行"
+        },
+        "devbuddy.testFramework": {
+          "type": "string",
+          "enum": ["pytest", "unittest", "jest", "mocha", "cargo-test", "go-test"],
+          "default": "pytest",
+          "description": "テスト生成で使用するフレームワーク"
+        },
+        "devbuddy.showInlineIssues": {
+          "type": "boolean",
+          "default": true,
+          "description": "エディタ内にインラインで問題を表示"
+        },
+        "devbuddy.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "devbuddy CLIのパス（空の場合はPATHから検索）"
+        },
+        "devbuddy.serverUrl": {
+          "type": "string",
+          "default": "",
+          "description": "DevBuddyAIサーバーURL（自己ホスト版用）"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "devbuddy.reviewFile",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "devbuddy.generateTests",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "devbuddy.suggestFix",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "editorTextFocus && editorHasSelection"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "devbuddy",
+          "title": "DevBuddyAI",
+          "icon": "images/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "devbuddy": [
+        {
+          "id": "devbuddy.issues",
+          "name": "問題一覧"
+        },
+        {
+          "id": "devbuddy.tests",
+          "name": "生成テスト"
+        },
+        {
+          "id": "devbuddy.usage",
+          "name": "利用状況"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.x",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/masuda-hikari/DevBuddyAI"
+  },
+  "license": "MIT",
+  "homepage": "https://masuda-hikari.github.io/DevBuddyAI/"
+}

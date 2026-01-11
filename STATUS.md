@@ -5,7 +5,7 @@
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
 - 進捗: Phase 1-2完了、Phase 3-4進行中
-- **NEW**: FastAPI Webhookサーバー実装完了
+- **NEW**: VSCode拡張基盤完了
 
 ## プロジェクト概要
 AI開発者支援ツール。コードレビュー、テスト生成、バグ修正提案を自動化。
@@ -71,6 +71,13 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - **MkDocs APIリファレンスドキュメント**
   - docs_src/配下に全APIドキュメント
   - mkdocs.yml設定完了
+- **VSCode拡張基盤 (NEW)**
+  - vscode-extension/配下に完全な拡張構造
+  - TypeScript実装（extension.ts, client.ts, diagnostics.ts）
+  - ツリービュープロバイダー（問題一覧/生成テスト/利用状況）
+  - コマンド: review/testgen/fix/setApiKey/showUsage
+  - 設定項目: apiKey/model/severity/autoReviewOnSave/testFramework
+  - キーボードショートカット: Ctrl+Shift+R/T/F
 
 ## コード品質
 - flake8: 0 errors
@@ -97,6 +104,14 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - または: Actions → Publish this action to the Marketplace
 
 ## 最近の変更
+- 2026-01-11: **VSCode拡張基盤追加**
+  - vscode-extension/配下に完全な拡張構造
+  - package.json、tsconfig.json、eslint設定
+  - extension.ts（メインエントリ）、client.ts（APIクライアント）
+  - diagnostics.ts（診断管理）、providers/（ツリービュー）
+  - テストスイート（extension.test.ts）
+  - README.md、アイコン（icon.svg）
+  - mypy型エラー修正（cli.py、licensing.py）
 - 2026-01-11: **クラウドデプロイ設定追加**
   - Dockerfile新規作成（マルチステージビルド・本番最適化）
   - .dockerignore新規作成
