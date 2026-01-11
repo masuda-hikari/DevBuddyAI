@@ -677,3 +677,236 @@ class TestRustAnalyzerLineNumber:
         if unsafe_issues:
             # unsafeは3行目にある
             assert unsafe_issues[0].line == 3
+
+
+class TestRustAnalyzerClippyLevelConversion:
+    """clippyレベル変換のテスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = RustAnalyzer()
+
+    def test_clippy_level_error(self):
+        """errorレベルの変換"""
+        assert self.analyzer._clippy_level_to_level("error") == "bug"
+
+    def test_clippy_level_warning(self):
+        """warningレベルの変換"""
+        assert self.analyzer._clippy_level_to_level("warning") == "warning"
+
+    def test_clippy_level_note(self):
+        """noteレベルの変換"""
+        assert self.analyzer._clippy_level_to_level("note") == "info"
+
+    def test_clippy_level_help(self):
+        """helpレベルの変換"""
+        assert self.analyzer._clippy_level_to_level("help") == "info"
+
+    def test_clippy_level_unknown(self):
+        """未知のレベルの変換"""
+        assert self.analyzer._clippy_level_to_level("unknown") == "info"
+        assert self.analyzer._clippy_level_to_level("") == "info"
+
+
+class TestRustAnalyzerEmptyImplDetection:
+    """空のimpl検出のテスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = RustAnalyzer()
+
+    def test_detect_empty_impl(self):
+        """空のimplブロック検出"""
+        code = """
+impl MyStruct {}
+"""
+        issues = self.analyzer.analyze(code)
+        empty_impl = [i for i in issues if "Empty impl" in i.message]
+        assert len(empty_impl) > 0
+
+    def test_no_false_positive_on_nonempty_impl(self):
+        """空でないimplで誤検出しない"""
+        code = """
+impl MyStruct {
+    fn new() -> Self {
+        MyStruct
+    }
+}
+"""
+        issues = self.analyzer.analyze(code)
+        empty_impl = [i for i in issues if "Empty impl" in i.message]
+        assert len(empty_impl) == 0
+
+
+class TestRustAnalyzerSyntaxEdgeCases:
+    """構文チェックエッジケースのテスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = RustAnalyzer()
+
+    def test_unexpected_closing_bracket(self):
+        """予期しない閉じ括弧"""
+        code = "fn main() { } }"
+        valid, error = self.analyzer.check_syntax(code)
+        assert valid is False
+        assert "Unexpected closing" in error
+
+    def test_escape_in_string(self):
+        """文字列内のエスケープ"""
+        code = '''
+fn main() {
+    let s = "escaped \\" quote";
+}
+'''
+        valid, error = self.analyzer.check_syntax(code)
+        assert valid is True
+
+    def test_escape_in_char(self):
+        """文字リテラル内のエスケープ"""
+        code = """
+fn main() {
+    let c = '\\n';
+    let d = '\\'';
+}
+"""
+        valid, error = self.analyzer.check_syntax(code)
+        assert valid is True
+
+    def test_lifetime_with_underscore(self):
+        """アンダースコア付きライフタイム"""
+        code = """
+fn get_ref<'a_lifetime>(s: &'a_lifetime str) -> &'a_lifetime str {
+    s
+}
+"""
+        valid, error = self.analyzer.check_syntax(code)
+        assert valid is True
+
+    def test_static_lifetime(self):
+        """'staticライフタイム"""
+        code = """
+fn get_static() -> &'static str {
+    "hello"
+}
+"""
+        valid, error = self.analyzer.check_syntax(code)
+        assert valid is True
+
+
+class TestRustAnalyzerImplParsing:
+    """impl取得の詳細テスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = RustAnalyzer()
+
+    def test_get_impl_with_generics(self):
+        """ジェネリクス付きimpl"""
+        code = """
+impl<T> Container<T> {
+    fn new() -> Self {
+        Container { data: None }
+    }
+}
+"""
+        impls = self.analyzer.get_impls(code)
+        assert any(i.get("type") == "Container" for i in impls)
+
+    def test_get_impl_trait_for_generic_type(self):
+        """ジェネリック型へのトレイト実装"""
+        code = """
+impl Default for Container {
+    fn default() -> Self {
+        Container { data: None }
+    }
+}
+"""
+        impls = self.analyzer.get_impls(code)
+        assert any(
+            i.get("trait") == "Default" and i.get("type") == "Container"
+            for i in impls
+        )
+
+    def test_multiple_impls_same_type(self):
+        """同じ型への複数impl"""
+        code = """
+impl Point {
+    fn new() -> Self { Point { x: 0, y: 0 } }
+}
+
+impl Debug for Point {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "Point")
+    }
+}
+
+impl Point {
+    fn distance(&self) -> f64 { 0.0 }
+}
+"""
+        impls = self.analyzer.get_impls(code)
+        point_impls = [i for i in impls if i.get("type") == "Point"]
+        assert len(point_impls) >= 2
+
+
+class TestRustAnalyzerDenyWarnings:
+    """deny_warnings設定のテスト"""
+
+    def test_config_deny_warnings(self):
+        """deny_warnings設定"""
+        config = RustAnalysisConfig(deny_warnings=True)
+        analyzer = RustAnalyzer(config)
+        assert analyzer.config.deny_warnings is True
+
+    def test_config_no_deny_warnings(self):
+        """deny_warnings無効"""
+        config = RustAnalysisConfig(deny_warnings=False)
+        analyzer = RustAnalyzer(config)
+        assert analyzer.config.deny_warnings is False
+
+
+class TestRustAnalyzerPatternEdgeCases:
+    """パターンマッチングエッジケースのテスト"""
+
+    def setup_method(self):
+        """各テスト前の初期化"""
+        self.analyzer = RustAnalyzer()
+
+    def test_normal_expect_message(self):
+        """通常のexpectメッセージ（誤検出しない）"""
+        code = '''
+fn main() {
+    let value = some_option.expect("Value should exist");
+}
+'''
+        issues = self.analyzer.analyze(code)
+        empty_expect = [
+            i for i in issues if "empty message" in i.message.lower()
+        ]
+        assert len(empty_expect) == 0
+
+    def test_transmute_without_mem(self):
+        """mem::なしのtransmute"""
+        code = """
+use std::mem::transmute;
+fn convert() {
+    let x: u32 = unsafe { transmute(bytes) };
+}
+"""
+        issues = self.analyzer.analyze(code)
+        transmute_issues = [
+            i for i in issues if "transmute" in i.message.lower()
+        ]
+        assert len(transmute_issues) > 0
+
+    def test_single_clone(self):
+        """単一のclone()（検出しない）"""
+        code = """
+fn main() {
+    let a = value.clone();
+}
+"""
+        issues = self.analyzer.analyze(code)
+        multi_clone = [i for i in issues if "Multiple clone" in i.message]
+        assert len(multi_clone) == 0

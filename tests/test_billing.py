@@ -646,7 +646,8 @@ class TestWebhookVerification:
             webhook_secret="whsec_test_secret"
         )
 
-        with pytest.raises(WebhookVerificationError, match="Invalid signature"):
+        expected_msg = "Invalid signature"
+        with pytest.raises(WebhookVerificationError, match=expected_msg):
             client.verify_webhook_signature(b"payload", "sig_123")
 
     @patch("devbuddy.core.billing.BillingClient._get_stripe")
@@ -718,7 +719,8 @@ class TestCheckoutSessionErrors:
     def test_create_checkout_api_error(self, mock_get_stripe):
         """Stripe API エラー"""
         mock_stripe = MagicMock()
-        mock_stripe.checkout.Session.create.side_effect = Exception("API Error")
+        err = Exception("API Error")
+        mock_stripe.checkout.Session.create.side_effect = err
         mock_get_stripe.return_value = mock_stripe
 
         client = BillingClient(api_key="sk_test_123")
@@ -818,12 +820,13 @@ class TestWebhookHandlerEdgeCases:
 
     def test_handle_subscription_updated_active_invalid_plan(self, handler):
         """subscription.updatedでactiveだが無効なプラン"""
+        meta = {"plan": "invalid", "email": "test@example.com"}
         event = {
             "type": "customer.subscription.updated",
             "data": {
                 "object": {
                     "status": "active",
-                    "metadata": {"plan": "invalid", "email": "test@example.com"},
+                    "metadata": meta,
                 }
             },
         }
