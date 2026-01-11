@@ -449,3 +449,263 @@ class TestFixVerificationReport:
         assert report.fixed_count == 3
         assert len(report.remaining_issues) == 2
         assert len(report.applied_suggestions) == 3
+
+
+class TestSuggestFix:
+    """suggest_fixメソッドのテスト"""
+
+    @pytest.fixture
+    def fixer(self):
+        """フィクサーインスタンス"""
+        client = MockLLMClient(responses={
+            "fix": """FILE: test.py
+LINE: 10
+DESCRIPTION: Fix bug
+ORIGINAL: old
+REPLACEMENT: new
+"""
+        })
+        return BugFixer(client=client, skip_license_check=True)
+
+    @patch("devbuddy.core.fixer.subprocess.run")
+    def test_suggest_fix_subprocess_exception(self, mock_run, fixer):
+        """subprocess実行例外"""
+        mock_run.side_effect = Exception("Command not found")
+
+        result = fixer.suggest_fix(Path("test.py"))
+
+        assert result.success is False
+        assert "Command not found" in result.error
+
+    @patch("devbuddy.core.fixer.subprocess.run")
+    def test_suggest_fix_with_source_path(self, mock_run, fixer, tmp_path):
+        """ソースパス指定でのテスト"""
+        # テストファイルを作成
+        test_file = tmp_path / "test_code.py"
+        test_file.write_text("def test(): pass", encoding="utf-8")
+
+        # ソースファイルを作成
+        source_file = tmp_path / "code.py"
+        source_file.write_text("def func(): return 1", encoding="utf-8")
+
+        # テスト失敗をモック
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="1 passed, 1 failed",
+            stderr=""
+        )
+
+        result = fixer.suggest_fix(test_file, source_path=source_file)
+
+        assert result.success is True
+
+    @patch("devbuddy.core.fixer.subprocess.run")
+    def test_suggest_fix_source_read_failure(self, mock_run, fixer, tmp_path):
+        """ソースファイル読み込み失敗（継続）"""
+        # テストファイルを作成
+        test_file = tmp_path / "test_code.py"
+        test_file.write_text("def test(): pass", encoding="utf-8")
+
+        # 存在しないソースファイル
+        source_file = tmp_path / "nonexistent.py"
+
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="failed", stderr=""
+        )
+
+        # 存在しないソースファイルでも処理継続
+        result = fixer.suggest_fix(test_file, source_path=source_file)
+        assert result.success is True
+
+    @patch("devbuddy.core.fixer.subprocess.run")
+    def test_suggest_fix_test_file_not_found(self, mock_run, fixer, tmp_path):
+        """テストファイルが存在しない"""
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr=""
+        )
+
+        result = fixer.suggest_fix(tmp_path / "nonexistent_test.py")
+
+        assert result.success is False
+        assert "Failed to read test file" in result.error
+
+    @patch("devbuddy.core.fixer.subprocess.run")
+    def test_suggest_fix_llm_exception(self, mock_run, tmp_path):
+        """LLM呼び出し例外"""
+        # エラーを投げるモッククライアント
+        error_client = MagicMock()
+        error_client.complete.side_effect = Exception("API Error")
+
+        fixer = BugFixer(client=error_client, skip_license_check=True)
+
+        test_file = tmp_path / "test.py"
+        test_file.write_text("def test(): pass", encoding="utf-8")
+
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="1 failed", stderr=""
+        )
+
+        result = fixer.suggest_fix(test_file)
+
+        assert result.success is False
+        assert "API Error" in result.error
+
+
+class TestSuggestAndVerify:
+    """suggest_and_verifyメソッドのテスト"""
+
+    def test_suggest_and_verify_test_passes(self):
+        """テストがすでに成功している場合"""
+        client = MockLLMClient()
+        fixer = BugFixer(client=client, skip_license_check=True)
+
+        with patch("devbuddy.core.fixer.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(
+                returncode=0, stdout="1 passed", stderr=""
+            )
+
+            result = fixer.suggest_and_verify(Path("test.py"))
+
+            assert result.success is True
+            assert result.verified is True
+            assert len(result.suggestions) == 0
+
+    def test_suggest_and_verify_initial_fail(self, tmp_path):
+        """初期テスト失敗時に提案が返される（auto_apply=False）"""
+        # bug_fixプロンプトは「失敗」を含むため、そのキーワードを使用
+        client = MockLLMClient(responses={
+            "失敗": """FILE: test.py
+LINE: 1
+DESCRIPTION: Fix bug
+ORIGINAL: test_code
+REPLACEMENT: fixed_code
+"""
+        })
+        fixer = BugFixer(client=client, skip_license_check=True)
+
+        # 実際のテストファイルを作成
+        test_file = tmp_path / "test.py"
+        test_file.write_text("test_code", encoding="utf-8")
+
+        with patch("devbuddy.core.fixer.subprocess.run") as mock_run:
+            # テスト失敗をモック
+            mock_run.return_value = MagicMock(
+                returncode=1, stdout="1 failed", stderr=""
+            )
+
+            result = fixer.suggest_and_verify(
+                test_file, auto_apply=False
+            )
+
+            assert result.success is True
+            # suggestionsが取得され、auto_apply=Falseなので提案のみ
+            assert len(result.suggestions) > 0
+            assert result.verified is False
+
+
+class TestLicenseCheck:
+    """ライセンスチェックのテスト"""
+
+    @patch("devbuddy.core.fixer.subprocess.run")
+    def test_license_check_limit_exceeded(self, mock_run):
+        """利用制限超過"""
+        from devbuddy.core.licensing import LicenseManager, UsageLimitError
+
+        mock_manager = MagicMock(spec=LicenseManager)
+        mock_manager.check_fix_limit.side_effect = UsageLimitError(
+            "Monthly fix limit exceeded"
+        )
+
+        client = MockLLMClient()
+        fixer = BugFixer(
+            client=client,
+            license_manager=mock_manager,
+            skip_license_check=False
+        )
+
+        result = fixer.suggest_fix(Path("test.py"))
+
+        assert result.success is False
+        assert "limit exceeded" in result.error
+
+    @patch("devbuddy.core.fixer.subprocess.run")
+    def test_license_usage_recorded(self, mock_run, tmp_path):
+        """利用量が記録される"""
+        from devbuddy.core.licensing import LicenseManager
+
+        mock_manager = MagicMock(spec=LicenseManager)
+        mock_manager.check_fix_limit.return_value = None
+
+        client = MockLLMClient(responses={
+            "fix": """FILE: test.py
+LINE: 1
+DESCRIPTION: Fix
+ORIGINAL: old
+REPLACEMENT: new
+"""
+        })
+
+        fixer = BugFixer(
+            client=client,
+            license_manager=mock_manager,
+            skip_license_check=False
+        )
+
+        test_file = tmp_path / "test.py"
+        test_file.write_text("old", encoding="utf-8")
+
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="failed", stderr=""
+        )
+
+        fixer.suggest_fix(test_file)
+
+        mock_manager.record_fix.assert_called_once()
+
+
+class TestEdgeCases:
+    """エッジケースのテスト"""
+
+    @pytest.fixture
+    def fixer(self):
+        """フィクサーインスタンス"""
+        client = MockLLMClient()
+        return BugFixer(client=client, skip_license_check=True)
+
+    def test_extract_confidence_invalid_value(self, fixer):
+        """無効な信頼度値"""
+        data = {"confidence": "not_a_number", "description": "test"}
+        # 無効な値の場合は説明文から推測
+        assert fixer._extract_confidence(data) == 0.6
+
+    def test_extract_stack_traces_no_traceback(self, fixer):
+        """トレースバックがない場合"""
+        output = "E     AssertionError: 1 != 2"
+        traces = fixer._extract_stack_traces(output)
+        # エラー行が抽出される
+        assert len(traces) >= 1
+
+    def test_parse_test_output_no_match(self, fixer):
+        """マッチしないテスト出力"""
+        output = "No tests were run"
+        report = fixer._parse_test_output(output)
+
+        assert report.passed == 0
+        assert report.failed == 0
+
+    def test_license_manager_lazy_init(self):
+        """ライセンスマネージャーの遅延初期化"""
+        client = MockLLMClient()
+        fixer = BugFixer(client=client, skip_license_check=False)
+
+        # 最初はNone
+        assert fixer._license_manager is None
+
+        # アクセスすると初期化される
+        _ = fixer.license_manager
+        assert fixer._license_manager is not None
+
+    def test_get_test_command_unknown_language(self, fixer):
+        """未知の言語はPythonにフォールバック"""
+        cmd = fixer.get_test_command("unknown_lang", Path("test.xyz"))
+        assert cmd[0] == "pytest"

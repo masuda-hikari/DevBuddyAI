@@ -495,3 +495,339 @@ class TestBillingIntegration:
         assert result["status"] == "success"
         assert license_manager.get_license() is None
         assert license_manager.get_plan() == Plan.FREE
+
+
+class TestCancelSubscription:
+    """cancel_subscription メソッドのテスト"""
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_cancel_subscription_at_period_end(self, mock_get_stripe):
+        """期間終了時キャンセル"""
+        mock_stripe = MagicMock()
+        mock_sub = MagicMock()
+        mock_sub.id = "sub_test_123"
+        mock_sub.customer = "cus_test_456"
+        mock_sub.metadata = {"plan": "pro"}
+        mock_sub.status = "active"
+        mock_sub.current_period_start = 1704067200
+        mock_sub.current_period_end = 1706745600
+        mock_sub.cancel_at_period_end = True
+        mock_stripe.Subscription.modify.return_value = mock_sub
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(api_key="sk_test_123")
+        sub = client.cancel_subscription("sub_test_123", at_period_end=True)
+
+        assert sub.subscription_id == "sub_test_123"
+        assert sub.cancel_at_period_end is True
+        mock_stripe.Subscription.modify.assert_called_once_with(
+            "sub_test_123",
+            cancel_at_period_end=True,
+        )
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_cancel_subscription_immediately(self, mock_get_stripe):
+        """即座にキャンセル"""
+        mock_stripe = MagicMock()
+        mock_sub = MagicMock()
+        mock_sub.id = "sub_test_123"
+        mock_sub.customer = "cus_test_456"
+        mock_sub.metadata = {"plan": "pro"}
+        mock_sub.status = "canceled"
+        mock_sub.current_period_start = 1704067200
+        mock_sub.current_period_end = 1706745600
+        mock_sub.cancel_at_period_end = False
+        mock_stripe.Subscription.cancel.return_value = mock_sub
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(api_key="sk_test_123")
+        sub = client.cancel_subscription("sub_test_123", at_period_end=False)
+
+        assert sub.subscription_id == "sub_test_123"
+        assert sub.status == "canceled"
+        mock_stripe.Subscription.cancel.assert_called_once_with("sub_test_123")
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_cancel_subscription_error(self, mock_get_stripe):
+        """キャンセル失敗"""
+        mock_stripe = MagicMock()
+        mock_stripe.Subscription.modify.side_effect = Exception("API Error")
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(api_key="sk_test_123")
+
+        with pytest.raises(BillingError, match="Failed to cancel"):
+            client.cancel_subscription("sub_test_123")
+
+
+class TestCreateCheckoutUrl:
+    """create_checkout_url 関数のテスト"""
+
+    @patch("devbuddy.core.billing.BillingClient.create_checkout_session")
+    def test_create_checkout_url(self, mock_create_session):
+        """Checkout URL生成"""
+        from devbuddy.core.billing import create_checkout_url
+
+        mock_session = MagicMock()
+        mock_session.url = "https://checkout.stripe.com/pay/cs_test_123"
+        mock_create_session.return_value = mock_session
+
+        url = create_checkout_url(
+            plan=Plan.PRO,
+            email="test@example.com",
+            base_url="https://example.com",
+        )
+
+        assert url == "https://checkout.stripe.com/pay/cs_test_123"
+        mock_create_session.assert_called_once()
+
+        # 呼び出し引数を確認
+        call_args = mock_create_session.call_args
+        assert call_args.kwargs["plan"] == Plan.PRO
+        assert call_args.kwargs["email"] == "test@example.com"
+        assert "success" in call_args.kwargs["success_url"]
+        assert "pricing" in call_args.kwargs["cancel_url"]
+
+
+class TestGetStripe:
+    """_get_stripe メソッドのテスト"""
+
+    def test_get_stripe_import_error(self):
+        """stripe パッケージがない場合"""
+        with patch.dict("sys.modules", {"stripe": None}):
+            with patch(
+                "builtins.__import__",
+                side_effect=ImportError("No module named 'stripe'")
+            ):
+                client = BillingClient(api_key="sk_test_123")
+                client._stripe = None
+
+                with pytest.raises(BillingError, match="stripe package"):
+                    client._get_stripe()
+
+
+class TestWebhookVerification:
+    """Webhook検証のテスト"""
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_verify_webhook_success(self, mock_get_stripe):
+        """署名検証成功"""
+        mock_stripe = MagicMock()
+        mock_event = {"type": "test.event", "data": {}}
+        mock_stripe.Webhook.construct_event.return_value = mock_event
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(
+            api_key="sk_test_123",
+            webhook_secret="whsec_test_secret"
+        )
+        result = client.verify_webhook_signature(b"payload", "sig_123")
+
+        assert result["type"] == "test.event"
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_verify_webhook_invalid_signature(self, mock_get_stripe):
+        """署名検証失敗"""
+        mock_stripe = MagicMock()
+
+        # SignatureVerificationError をモック
+        class MockSignatureError(Exception):
+            pass
+
+        mock_stripe.error = MagicMock()
+        mock_stripe.error.SignatureVerificationError = MockSignatureError
+        mock_stripe.Webhook.construct_event.side_effect = MockSignatureError(
+            "Invalid signature"
+        )
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(
+            api_key="sk_test_123",
+            webhook_secret="whsec_test_secret"
+        )
+
+        with pytest.raises(WebhookVerificationError, match="Invalid signature"):
+            client.verify_webhook_signature(b"payload", "sig_123")
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_verify_webhook_general_error(self, mock_get_stripe):
+        """署名検証で一般的なエラー"""
+        mock_stripe = MagicMock()
+        mock_stripe.error = MagicMock()
+        mock_stripe.error.SignatureVerificationError = type(
+            "SignatureVerificationError", (Exception,), {}
+        )
+        mock_stripe.Webhook.construct_event.side_effect = Exception(
+            "General error"
+        )
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(
+            api_key="sk_test_123",
+            webhook_secret="whsec_test_secret"
+        )
+
+        with pytest.raises(
+            WebhookVerificationError, match="Webhook verification failed"
+        ):
+            client.verify_webhook_signature(b"payload", "sig_123")
+
+
+class TestCheckoutSessionErrors:
+    """CheckoutSession作成エラーのテスト"""
+
+    def test_create_checkout_invalid_plan(self):
+        """無効なプランでエラー"""
+        # Plan.FREEは設定にないのでFreeプランエラーとなる
+        client = BillingClient(api_key="sk_test_123")
+
+        with pytest.raises(BillingError, match="Free plan"):
+            client.create_checkout_session(
+                plan=Plan.FREE,
+                email="test@example.com",
+                success_url="https://example.com/success",
+                cancel_url="https://example.com/cancel",
+            )
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_create_checkout_with_metadata(self, mock_get_stripe):
+        """メタデータ付きでCheckout作成"""
+        mock_stripe = MagicMock()
+        mock_session = MagicMock()
+        mock_session.id = "cs_test_123"
+        mock_session.url = "https://checkout.stripe.com/pay/cs_test_123"
+        mock_session.status = "open"
+        mock_stripe.checkout.Session.create.return_value = mock_session
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(api_key="sk_test_123")
+        session = client.create_checkout_session(
+            plan=Plan.PRO,
+            email="test@example.com",
+            success_url="https://example.com/success",
+            cancel_url="https://example.com/cancel",
+            metadata={"custom_field": "custom_value"},
+        )
+
+        assert session.session_id == "cs_test_123"
+        # メタデータが渡されたことを確認
+        call_args = mock_stripe.checkout.Session.create.call_args
+        assert "custom_field" in call_args.kwargs["metadata"]
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_create_checkout_api_error(self, mock_get_stripe):
+        """Stripe API エラー"""
+        mock_stripe = MagicMock()
+        mock_stripe.checkout.Session.create.side_effect = Exception("API Error")
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(api_key="sk_test_123")
+
+        with pytest.raises(BillingError, match="Failed to create"):
+            client.create_checkout_session(
+                plan=Plan.PRO,
+                email="test@example.com",
+                success_url="https://example.com/success",
+                cancel_url="https://example.com/cancel",
+            )
+
+
+class TestSubscriptionErrors:
+    """サブスクリプション取得エラーのテスト"""
+
+    @patch("devbuddy.core.billing.BillingClient._get_stripe")
+    def test_get_subscription_error(self, mock_get_stripe):
+        """サブスクリプション取得エラー"""
+        mock_stripe = MagicMock()
+        mock_stripe.Subscription.retrieve.side_effect = Exception("Not found")
+        mock_get_stripe.return_value = mock_stripe
+
+        client = BillingClient(api_key="sk_test_123")
+
+        with pytest.raises(BillingError, match="Failed to get subscription"):
+            client.get_subscription("sub_not_found")
+
+
+class TestWebhookHandlerEdgeCases:
+    """Webhookハンドラーのエッジケーステスト"""
+
+    @pytest.fixture
+    def handler(self, tmp_path):
+        """テスト用ハンドラー"""
+        billing_client = BillingClient(api_key="sk_test_123")
+        license_manager = LicenseManager(data_dir=tmp_path)
+        return BillingWebhookHandler(billing_client, license_manager)
+
+    def test_handle_checkout_invalid_plan(self, handler):
+        """checkout.session.completedで無効なプラン"""
+        event = {
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "customer_email": "test@example.com",
+                    "metadata": {"plan": "invalid_plan"},
+                }
+            },
+        }
+
+        result = handler.handle_event(event)
+
+        # 無効なプランはデフォルトでPROにフォールバック
+        assert result["status"] == "success"
+        assert result["plan"] == "pro"
+
+    def test_handle_subscription_updated_past_due(self, handler):
+        """subscription.updatedでpast_dueの処理"""
+        # まずライセンスをアクティベート
+        handler.license_manager.activate("DB-PRO-abc123", "test@example.com")
+
+        event = {
+            "type": "customer.subscription.updated",
+            "data": {
+                "object": {
+                    "status": "past_due",
+                    "metadata": {"plan": "pro", "email": "test@example.com"},
+                }
+            },
+        }
+
+        result = handler.handle_event(event)
+
+        assert result["status"] == "success"
+        # ライセンスが無効化される
+        assert handler.license_manager.get_license() is None
+
+    def test_handle_subscription_updated_unpaid(self, handler):
+        """subscription.updatedでunpaidの処理"""
+        handler.license_manager.activate("DB-PRO-abc123", "test@example.com")
+
+        event = {
+            "type": "customer.subscription.updated",
+            "data": {
+                "object": {
+                    "status": "unpaid",
+                    "metadata": {"plan": "pro", "email": "test@example.com"},
+                }
+            },
+        }
+
+        result = handler.handle_event(event)
+
+        assert result["status"] == "success"
+        assert handler.license_manager.get_license() is None
+
+    def test_handle_subscription_updated_active_invalid_plan(self, handler):
+        """subscription.updatedでactiveだが無効なプラン"""
+        event = {
+            "type": "customer.subscription.updated",
+            "data": {
+                "object": {
+                    "status": "active",
+                    "metadata": {"plan": "invalid", "email": "test@example.com"},
+                }
+            },
+        }
+
+        # エラーは発生せず、処理が継続される
+        result = handler.handle_event(event)
+        assert result["status"] == "success"
