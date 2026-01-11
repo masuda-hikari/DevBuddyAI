@@ -4,8 +4,30 @@ pytest共通設定・フィクスチャ
 
 import pytest
 from pathlib import Path
+from unittest.mock import patch
 
 from devbuddy.llm.client import MockLLMClient
+
+
+@pytest.fixture(autouse=True)
+def skip_license_check(request):
+    """全テストでライセンスチェックをスキップ（ライセンステスト以外）"""
+    # test_licensing.pyでのテストはモックしない
+    if "test_licensing" in request.node.nodeid:
+        yield
+        return
+
+    with patch(
+        "devbuddy.core.licensing.LicenseManager.check_review_limit",
+        return_value=True
+    ), patch(
+        "devbuddy.core.licensing.LicenseManager.check_testgen_limit",
+        return_value=True
+    ), patch(
+        "devbuddy.core.licensing.LicenseManager.check_fix_limit",
+        return_value=True
+    ):
+        yield
 
 
 @pytest.fixture

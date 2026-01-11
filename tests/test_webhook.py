@@ -298,6 +298,149 @@ class TestEndpoints:
         assert response.status_code == 400
 
 
+@pytest.mark.skipif(not _can_import_fastapi(), reason="FastAPI not installed")
+class TestEndpointsSuccess:
+    """成功系エンドポイントテスト"""
+
+    @pytest.fixture
+    def mock_billing_client(self):  # type: ignore[no-untyped-def]
+        """モックBillingClientを作成"""
+        from datetime import datetime
+        from devbuddy.core.billing import CheckoutSession, Subscription
+        from devbuddy.core.licensing import Plan
+
+        mock = MagicMock()
+
+        # create_checkout_session のモック
+        mock.create_checkout_session.return_value = CheckoutSession(
+            session_id="cs_test_123",
+            url="https://checkout.stripe.com/test",
+            plan=Plan.PRO,
+            email="test@example.com",
+            status="open",
+            created_at="2026-01-11T00:00:00Z",
+        )
+
+        # get_subscription のモック
+        mock.get_subscription.return_value = Subscription(
+            subscription_id="sub_test_123",
+            customer_id="cus_test_123",
+            plan=Plan.PRO,
+            status="active",
+            current_period_start=datetime(2026, 1, 1),
+            current_period_end=datetime(2026, 2, 1),
+            cancel_at_period_end=False,
+        )
+
+        # cancel_subscription のモック
+        mock.cancel_subscription.return_value = Subscription(
+            subscription_id="sub_test_123",
+            customer_id="cus_test_123",
+            plan=Plan.PRO,
+            status="active",
+            current_period_start=datetime(2026, 1, 1),
+            current_period_end=datetime(2026, 2, 1),
+            cancel_at_period_end=True,
+        )
+
+        # verify_webhook_signature のモック
+        mock.verify_webhook_signature.return_value = {
+            "type": "checkout.session.completed",
+            "data": {"object": {"customer_email": "test@example.com"}}
+        }
+
+        return mock
+
+    @pytest.fixture
+    def mock_webhook_handler(self):  # type: ignore[no-untyped-def]
+        """モックWebhookHandlerを作成"""
+        mock = MagicMock()
+        mock.handle_event.return_value = {
+            "status": "success",
+            "action": "license_activated"
+        }
+        return mock
+
+    @pytest.fixture
+    def client_success(  # type: ignore[no-untyped-def]
+        self, mock_billing_client, mock_webhook_handler
+    ):
+        """成功系テスト用クライアント"""
+        from fastapi.testclient import TestClient
+        from devbuddy.server.webhook import create_app, WebhookConfig
+
+        config = WebhookConfig(
+            stripe_api_key="test_key",
+            stripe_webhook_secret="test_secret",
+        )
+
+        app = create_app(
+            billing_client=mock_billing_client,
+            webhook_handler=mock_webhook_handler,
+            config=config,
+        )
+
+        return TestClient(app)
+
+    def test_create_checkout_success(  # type: ignore[no-untyped-def]
+        self, client_success
+    ) -> None:
+        """Checkout作成成功"""
+        response = client_success.post(
+            "/api/v1/checkout/create",
+            json={
+                "plan": "pro",
+                "email": "test@example.com",
+                "success_url": "https://example.com/success",
+                "cancel_url": "https://example.com/cancel",
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["session_id"] == "cs_test_123"
+        assert data["url"] == "https://checkout.stripe.com/test"
+        assert data["plan"] == "pro"
+
+    def test_get_subscription_success(  # type: ignore[no-untyped-def]
+        self, client_success
+    ) -> None:
+        """サブスクリプション取得成功"""
+        response = client_success.get("/api/v1/subscription/sub_test_123")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["subscription_id"] == "sub_test_123"
+        assert data["customer_id"] == "cus_test_123"
+        assert data["plan"] == "pro"
+        assert data["status"] == "active"
+
+    def test_cancel_subscription_success(  # type: ignore[no-untyped-def]
+        self, client_success
+    ) -> None:
+        """サブスクリプションキャンセル成功"""
+        response = client_success.post(
+            "/api/v1/subscription/cancel",
+            json={"subscription_id": "sub_test_123"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["subscription_id"] == "sub_test_123"
+        assert data["cancel_at_period_end"] is True
+
+    def test_stripe_webhook_success(  # type: ignore[no-untyped-def]
+        self, client_success
+    ) -> None:
+        """Stripe Webhook処理成功"""
+        response = client_success.post(
+            "/api/v1/webhook/stripe",
+            content=b'{"type": "checkout.session.completed"}',
+            headers={"Stripe-Signature": "test_sig"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["action"] == "license_activated"
+
+
 class TestWebhookIntegration:
     """Webhook統合テスト（モック使用）"""
 
@@ -401,3 +544,108 @@ class TestWebhookIntegration:
         result = handler.handle_event(event)
         assert result["status"] == "ignored"
         assert result["event_type"] == "unknown.event.type"
+
+
+class TestWebhookServerProperties:
+    """WebhookServerプロパティテスト"""
+
+    def test_billing_client_lazy_init(self) -> None:
+        """BillingClientが遅延初期化されることを確認"""
+        from devbuddy.server.webhook import WebhookServer, WebhookConfig
+
+        config = WebhookConfig(stripe_api_key="test_key")
+        server = WebhookServer(config)
+
+        # 初期状態ではNone
+        assert server._billing_client is None
+
+        # プロパティアクセスで初期化
+        client = server.billing_client
+        assert client is not None
+        assert server._billing_client is not None
+
+        # 同じインスタンスを返す
+        assert server.billing_client is client
+
+    def test_webhook_handler_lazy_init(self) -> None:
+        """WebhookHandlerが遅延初期化されることを確認"""
+        from devbuddy.server.webhook import WebhookServer, WebhookConfig
+
+        config = WebhookConfig(stripe_api_key="test_key")
+        server = WebhookServer(config)
+
+        # 初期状態ではNone
+        assert server._webhook_handler is None
+
+        # プロパティアクセスで初期化
+        handler = server.webhook_handler
+        assert handler is not None
+        assert server._webhook_handler is not None
+
+        # 同じインスタンスを返す
+        assert server.webhook_handler is handler
+
+    @pytest.mark.skipif(
+        not _can_import_fastapi(),
+        reason="FastAPI not installed"
+    )
+    def test_app_lazy_init(self) -> None:
+        """FastAPIアプリが遅延初期化されることを確認"""
+        from devbuddy.server.webhook import WebhookServer, WebhookConfig
+
+        config = WebhookConfig(stripe_api_key="test_key")
+        server = WebhookServer(config)
+
+        # 初期状態ではNone
+        assert server._app is None
+
+        # プロパティアクセスで初期化
+        app = server.app
+        assert app is not None
+        assert server._app is not None
+
+        # 同じインスタンスを返す
+        assert server.app is app
+
+
+class TestCreateAppDefaults:
+    """create_appのデフォルト動作テスト"""
+
+    @pytest.mark.skipif(
+        not _can_import_fastapi(),
+        reason="FastAPI not installed"
+    )
+    def test_create_app_no_clients(self) -> None:
+        """クライアントなしでアプリを作成"""
+        from devbuddy.server.webhook import create_app, WebhookConfig
+
+        config = WebhookConfig(stripe_api_key="test_key")
+        app = create_app(config=config)
+        assert app is not None
+        assert app.title == "DevBuddyAI Webhook Server"
+
+    @pytest.mark.skipif(
+        not _can_import_fastapi(),
+        reason="FastAPI not installed"
+    )
+    def test_create_app_no_config(self) -> None:
+        """設定なしでアプリを作成（環境変数から読み込み）"""
+        from devbuddy.server.webhook import create_app
+
+        with patch.dict("os.environ", {"STRIPE_API_KEY": "env_test_key"}):
+            app = create_app()
+            assert app is not None
+
+    @pytest.mark.skipif(
+        not _can_import_fastapi(),
+        reason="FastAPI not installed"
+    )
+    def test_create_app_billing_client_only(self) -> None:
+        """BillingClientのみ指定"""
+        from devbuddy.server.webhook import create_app, WebhookConfig
+
+        config = WebhookConfig(stripe_api_key="test_key")
+        mock_billing = MagicMock()
+
+        app = create_app(billing_client=mock_billing, config=config)
+        assert app is not None
