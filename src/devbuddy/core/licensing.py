@@ -227,9 +227,9 @@ class LicenseManager:
     def get_plan(self) -> Plan:
         """現在のプランを取得（ライセンスがなければFREE）"""
         license_info = self.get_license()
-        is_active = (license_info and license_info.is_valid
+        is_active = (license_info is not None and license_info.is_valid
                      and not license_info.is_expired())
-        if is_active:
+        if is_active and license_info is not None:
             return license_info.plan
         return Plan.FREE
 

@@ -7,7 +7,7 @@
 - **フェーズ**: Phase 1-2 完了、Phase 3-4 進行中
 - **公開準備**: PyPI Trusted Publisher設定待ち / GitHub Pages設定待ち
 - **法務対応**: 完了
-- **NEW**: クラウドデプロイ設定完了（Docker/Railway/Render/Fly.io）
+- **NEW**: VSCode拡張基盤完了
 
 ## 収益化進捗
 
@@ -31,44 +31,43 @@
 | ライセンスシステム | 完了 | 課金導線確立 |
 | Stripe課金連携 | 完了 | 決済導線確立 |
 | Webhookサーバー | 完了 | 本番デプロイ準備完了 |
-| **クラウドデプロイ** | **完了(NEW)** | **本番環境デプロイ可能** |
+| クラウドデプロイ | 完了 | 本番環境デプロイ可能 |
+| **VSCode拡張基盤** | **完了(NEW)** | **IDE統合準備完了** |
 
 ## 今回のセッション作業
 
 ### 実施内容
 
-1. **品質チェック・テスト修正**
-   - flake8行長エラー18件修正
-   - test_generator.py修正（ライセンスチェックスキップ対応）
-   - test_webhook.py修正（エラーメッセージ検証修正）
+1. **VSCode拡張ディレクトリ構造作成**
+   - vscode-extension/配下に完全なプロジェクト構造
+   - src/, src/providers/, src/test/, images/
+
+2. **package.json作成**
+   - 拡張機能定義（コマンド、メニュー、設定、キーバインド）
+   - 対応言語: Python/JavaScript/TypeScript/Rust/Go
+   - devDependencies: TypeScript, ESLint, Mocha, vsce
+
+3. **メイン機能実装**
+   - extension.ts: 拡張エントリポイント、コマンド登録
+   - client.ts: APIクライアント（CLI/HTTP両対応）
+   - diagnostics.ts: VSCode診断機能統合
+
+4. **ツリービュープロバイダー実装**
+   - issueTreeProvider.ts: 問題一覧表示
+   - testTreeProvider.ts: 生成テスト表示
+   - usageTreeProvider.ts: 利用状況表示
+
+5. **テストスイート作成**
+   - 6テストスイート（診断、TreeItem、設定等）
+
+6. **品質チェック・修正**
+   - mypy型エラー修正（cli.py、licensing.py）
    - テスト436件全合格確認
 
-2. **Dockerfile作成**
-   - マルチステージビルド（ビルド→ランタイム）
-   - 非rootユーザー実行（セキュリティ）
-   - ヘルスチェック設定
-   - .dockerignore作成
-
-3. **docker-compose.yml作成**
-   - 開発・テスト用構成
-
-4. **クラウドデプロイ設定作成**
-   - railway.toml（Railway.app）
-   - render.yaml（Render.com）
-   - fly.toml（Fly.io - 東京リージョン）
-
-5. **デプロイガイド作成**
-   - docs/DEPLOY_GUIDE.md
-   - 各プラットフォームの手順詳細
-
-6. **REVENUE_METRICS.md更新**
-   - Phase 4進捗更新
-   - 実装済み機能一覧更新
-
 ### 技術改善
-- クラウドデプロイ設定 → 本番環境デプロイ可能
-- Docker対応 → 自己ホスト版（Enterprise）提供可能
-- 複数プラットフォーム対応 → デプロイ柔軟性向上
+- VSCode拡張 → IDE統合 → エンタープライズ顧客獲得
+- ワンクリック操作 → 開発者体験向上
+- Marketplaceでの露出 → ユーザー発見性向上
 
 ### ブロッカー
 - **PyPI Trusted Publisher設定**（人間の作業が必要）
@@ -80,19 +79,19 @@
 
 | ファイル | 内容 |
 |---------|------|
-| Dockerfile | 本番環境向けDockerfile（新規） |
-| .dockerignore | Docker除外設定（新規） |
-| docker-compose.yml | 開発・テスト用構成（新規） |
-| railway.toml | Railway.appデプロイ設定（新規） |
-| render.yaml | Render.comデプロイ設定（新規） |
-| fly.toml | Fly.ioデプロイ設定（新規） |
-| docs/DEPLOY_GUIDE.md | デプロイ手順書（新規） |
-| src/devbuddy/cli.py | flake8行長エラー修正 |
-| src/devbuddy/core/fixer.py | flake8行長エラー修正 |
-| src/devbuddy/core/licensing.py | flake8行長エラー修正 |
-| src/devbuddy/server/webhook.py | flake8行長エラー修正 |
-| tests/test_generator.py | ライセンスチェックスキップ対応 |
-| tests/test_webhook.py | エラーメッセージ検証修正 |
+| vscode-extension/package.json | 拡張機能定義（新規） |
+| vscode-extension/tsconfig.json | TypeScript設定（新規） |
+| vscode-extension/.eslintrc.json | ESLint設定（新規） |
+| vscode-extension/.vscodeignore | パッケージ除外設定（新規） |
+| vscode-extension/README.md | 拡張使用方法（新規） |
+| vscode-extension/images/icon.svg | 拡張アイコン（新規） |
+| vscode-extension/src/extension.ts | メインエントリ（新規） |
+| vscode-extension/src/client.ts | APIクライアント（新規） |
+| vscode-extension/src/diagnostics.ts | 診断管理（新規） |
+| vscode-extension/src/providers/*.ts | ツリービュー（新規） |
+| vscode-extension/src/test/**/*.ts | テスト（新規） |
+| src/devbuddy/cli.py | mypy型エラー修正 |
+| src/devbuddy/core/licensing.py | mypy型エラー修正 |
 | STATUS.md | ステータス更新 |
 | .claude/DEVELOPMENT_LOG.md | ログ追記 |
 | .claude/REVENUE_METRICS.md | 進捗更新 |
@@ -106,13 +105,13 @@
 - GitHub Marketplace公開 → ユーザー発見性向上
 
 ### 中期（1-3ヶ月）
+- **VSCode Marketplace公開** → IDE統合ユーザー獲得
 - **Webhookサーバーデプロイ** → Stripe決済稼働
 - Pro版: ¥1,980/月、Team版: ¥9,800/月
-- Webhook自動処理でサブスクリプション管理
 
 ### 長期（3-6ヶ月）
 - Enterprise版
-- IDE統合
+- JetBrains IDE統合
 
 ## 次回推奨アクション
 
@@ -139,10 +138,8 @@
    - `pip install devbuddy-ai`
 
 ### 優先度3（AIで継続可能）
-5. **Webhookサーバーのクラウドデプロイ準備**
-   - Dockerfile作成
-   - Railway/Render/Fly.io用設定
-6. **IDE統合準備（VSCode拡張）**
+5. **VSCode拡張のnpm install・ビルド確認**
+6. **VSCode Marketplace公開準備**
 
 ## 自己診断
 
@@ -154,6 +151,7 @@
 | 完全性 | OK | 有料サービス提供に必要な要素完了 |
 | ドキュメント | OK | APIリファレンス・Marketplace説明完備 |
 | 決済導線 | OK | Stripe課金連携 + Webhookサーバー完了 |
+| IDE統合 | OK | VSCode拡張基盤完了 |
 | 継続性 | OK | 次アクション明確 |
 
 ---

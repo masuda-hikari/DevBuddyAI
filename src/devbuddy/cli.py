@@ -710,9 +710,9 @@ def license_status() -> None:
     click.echo(click.style("DevBuddyAI License Status", fg="cyan", bold=True))
     click.echo("=" * 40)
 
-    is_active = (license_info and license_info.is_valid
+    is_active = (license_info is not None and license_info.is_valid
                  and not license_info.is_expired())
-    if is_active:
+    if is_active and license_info is not None:
         plan_styled = click.style(
             license_info.plan.value.upper(), fg='green', bold=True
         )

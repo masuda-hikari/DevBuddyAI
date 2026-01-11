@@ -17,7 +17,7 @@
 - [x] CLI基本構造（Click）
 - [x] LLMクライアント実装
 - [x] プロンプトテンプレート設計
-- [x] テスト整備（386件合格）
+- [x] テスト整備（436件合格）
 - [x] 品質チェック（flake8/mypy 0エラー）
 - [x] 出力フォーマッター（JSON/Markdown対応）
 - [x] 設定ファイル統合（.devbuddy.yaml）
@@ -48,7 +48,9 @@
 - [x] 課金連携システム（Stripe）
 - [x] Webhookサーバー（FastAPI）
 - [x] クラウドデプロイ設定（Railway/Render/Fly.io）
-- [ ] IDE統合（VSCode, JetBrains）
+- [x] **VSCode拡張基盤（NEW）** - 完全なTypeScript実装
+- [ ] VSCode Marketplaceへの公開
+- [ ] JetBrains IDE統合
 
 ## 収益化タイムライン
 
