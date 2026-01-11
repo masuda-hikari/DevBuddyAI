@@ -45,6 +45,14 @@ lint = [
     "pylint>=3.0.0",
     "mypy>=1.8.0",
 ]
+server = [
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "stripe>=7.0.0",
+]
+billing = [
+    "stripe>=7.0.0",
+]
 
 [project.scripts]
 devbuddy = "devbuddy.cli:main"
