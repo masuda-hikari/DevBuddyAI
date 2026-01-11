@@ -5,7 +5,8 @@
 ## 現在の状態
 - 状態: PyPI公開待機中（Trusted Publisher設定待ち）
 - 進捗: Phase 1-2完了、Phase 3-4進行中
-- **NEW**: VSCode拡張vsixパッケージ作成成功
+- **NEW**: E2Eテスト28件追加、`__main__.py`追加（`python -m devbuddy`対応）
+- VSCode拡張vsixパッケージ作成成功
 - VSCode Marketplace公開準備完了
 
 ## プロジェクト概要
@@ -82,8 +83,8 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 
 ## コード品質
 - flake8: 0 errors
-- mypy: 0 errors (23 source files)
-- テスト: **436件**全合格（+22件）
+- mypy: 0 errors (24 source files)
+- テスト: **464件**全合格（+28件 E2E）
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
@@ -105,6 +106,10 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - または: Actions → Publish this action to the Marketplace
 
 ## 最近の変更
+- 2026-01-11: **E2Eテスト追加・__main__.py作成**
+  - tests/test_e2e.py新規作成（28件）
+  - src/devbuddy/__main__.py追加（`python -m devbuddy`対応）
+  - 全464件テスト合格
 - 2026-01-11: **VSCode拡張vsixパッケージ作成成功**
   - tsconfig.json修正（declaration無効化）
   - PNGアイコン生成
