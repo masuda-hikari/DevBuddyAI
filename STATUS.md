@@ -97,21 +97,32 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
 - パッケージ: twine check PASSED
 - ビルド: sdist + wheel 成功
 
-## 次のアクション
-1. **PyPI Trusted Publisher設定**（人間の作業）
+## 次のアクション（全て人間の作業が必要）
+
+### 優先度1: ブロッカー解消
+1. **PyPI Trusted Publisher設定**
    - https://pypi.org → Publishing → Add pending publisher
-   - 詳細: docs/PYPI_PUBLISH_GUIDE.md
-2. **GitHubリリース作成**（人間の作業）
-   - タグv0.1.0からリリースを作成
-   - **Marketplace公開**: リリース作成時に「Publish this Action to GitHub Marketplace」をチェック
-3. **PyPI公開後の動作確認**
-   - `pip install devbuddy-ai`
-   - `devbuddy --version`
-4. **GitHub Pages有効化**（人間の作業）
+   - Project: `devbuddy-ai`
+   - Owner: `masuda-hikari`
+   - Repository: `DevBuddyAI`
+   - Workflow: `publish.yml`
+   - Environment: `pypi`
+
+2. **GitHub Pages有効化**
    - リポジトリSettings → Pages → Source: GitHub Actions
    - ワークフロー: pages.yml
-5. **VSCode Marketplace公開**（人間の作業）
+
+3. **GitHubリリースv0.1.0作成**
+   - タグv0.1.0からリリースを作成
+   - 「Publish this Action to GitHub Marketplace」をチェック
+
+4. **VSCode Marketplace公開**
    - vscode-extension/devbuddy-ai-0.1.0.vsixをアップロード
+
+### 優先度2: 公開後の確認
+5. **PyPI公開後の動作確認**
+   - `pip install devbuddy-ai`
+   - `devbuddy --version`
 
 ## 最近の変更
 - 2026-01-12: **日本語README追加（日本市場向け最適化）**
