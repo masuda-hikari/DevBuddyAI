@@ -73,6 +73,8 @@ pip install -e .
 
 ## Quick Start
 
+**⚡ [5-Minute Quickstart Guide](docs/QUICKSTART.md)** - Get started in minutes!
+
 ### 1. Set up API Key
 ```bash
 export DEVBUDDY_API_KEY=your_api_key_here
@@ -87,6 +89,13 @@ devbuddy review path/to/your/code.py
 ```bash
 devbuddy testgen path/to/your/code.py
 ```
+
+### Want to try with real examples?
+
+Check out our [sample code](samples/):
+- [Web API Server](samples/web_api_server.py) - FastAPI/Flask patterns
+- [CLI Tool](samples/cli_tool.py) - Command-line applications
+- [Data Processing](samples/data_processing.py) - pandas/numpy workflows
 
 ## Configuration
 

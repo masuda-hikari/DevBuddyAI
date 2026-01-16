@@ -144,7 +144,7 @@ class DataProcessor:
             result = self._transform(data)
             self._cache.append(result)
             return result
-        except (TypeError, AttributeError) as e:
+        except (TypeError, AttributeError):
             # ログ出力が望ましい
             return None
 

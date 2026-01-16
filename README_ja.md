@@ -92,6 +92,8 @@ pip install -e .
 
 ## クイックスタート
 
+**⚡ [5分で始めるクイックスタートガイド](docs/QUICKSTART.md)** - 今すぐ試せます！
+
 ### 1. APIキーの設定
 ```bash
 export DEVBUDDY_API_KEY=your_api_key_here
@@ -113,6 +115,13 @@ devbuddy testgen path/to/your/code.py
 ```bash
 devbuddy fix path/to/failing_tests.py
 ```
+
+### 実際のコードで試してみる
+
+実践的な[サンプルコード](samples/)もご用意しています：
+- [Web APIサーバー](samples/web_api_server.py) - FastAPI/Flaskパターン
+- [CLIツール](samples/cli_tool.py) - コマンドラインアプリケーション
+- [データ処理](samples/data_processing.py) - pandas/numpyワークフロー
 
 ## 設定
 
