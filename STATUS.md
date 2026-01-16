@@ -1,13 +1,16 @@
 ﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿# DevBuddyAI - ステータス
 
-最終更新: 2026-01-12
+最終更新: 2026-01-17
 
 ## 現在の状態
-- 状態: **v0.1.0リリースタグ作成完了**
+- 状態: **v0.1.0リリースタグ作成完了・ユーザー獲得準備強化**
 - 進捗: Phase 1-2完了、Phase 3-4進行中
-- **NEW**: 日本語README追加（日本市場向け最適化）
-- **NEW**: GitHubリリースタグv0.1.0プッシュ完了
-- **NEW**: CHANGELOG.md作成完了
+- **NEW**: クイックスタートガイド追加（5分で始められる体験）
+- **NEW**: 実践的サンプルコード追加（Web API/CLI/データ処理）
+- **NEW**: README.mdにサンプルコードセクション追加
+- 日本語README追加（日本市場向け最適化）
+- GitHubリリースタグv0.1.0プッシュ完了
+- CHANGELOG.md作成完了
 - テストカバレッジ**85%**達成、**601件**テスト合格
 - rust_analyzer.py 76%、go_analyzer.py 77%カバレッジ向上
 - billing.py 96%、fixer.py 88%カバレッジ達成
@@ -125,6 +128,13 @@ AI開発者支援ツール。コードレビュー、テスト生成、バグ修
    - `devbuddy --version`
 
 ## 最近の変更
+- 2026-01-17: **ユーザー獲得準備強化**
+  - docs/QUICKSTART.md新規作成（5分で始められる導入フロー）
+  - samples/web_api_server.py新規作成（FastAPI CRUD API例）
+  - samples/cli_tool.py新規作成（ログパーサーツール例）
+  - samples/data_processing.py新規作成（pandas/numpyデータ分析例）
+  - README.md/README_ja.md更新（クイックスタートリンク・サンプルコード導線追加）
+  - flake8: 0エラー（buggy_code.py除外）
 - 2026-01-12: **日本語README追加（日本市場向け最適化）**
   - README_ja.md新規作成（全機能・使い方・料金プラン）
   - README.mdに日本語版リンク追加・料金表に日本円列追加
