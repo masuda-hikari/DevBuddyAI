@@ -78,11 +78,28 @@ NUL
 # ===================================
 # 機密・内部情報（公開禁止）
 # ===================================
-# Claude設定・ローカル設定
-.claude/settings.local.json
-.claude/DEVELOPMENT_LOG.md
-.claude/REVENUE_METRICS.md
-.claude/SESSION_REPORT.md
+# Claude開発環境（機密）
+.claude/
+CLAUDE.md
+CLAUDE-*.md
+STATUS.md
+TASKS.md
+
+# 認証情報・シークレット
+token.json
+*_token.json
+config/credentials/
+
+# データベース
+*.db
+*.sqlite
+*.sqlite3
+
+# セッションログ
+claude_raw_*.txt
+claude_stderr_*.txt
+claude_stdout_*.txt
+prompt_*.txt
 
 # ログ・実行履歴
 logs/
