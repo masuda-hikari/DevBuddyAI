@@ -16,7 +16,7 @@
 
 ### ⚡ **40% faster development** • 🐛 **86% bug detection** • 🚀 **3x faster code reviews**
 
-[Get Started in 5 Minutes](docs/QUICKSTART.md) • [View Demo](https://masuda-hikari.github.io/DevBuddyAI/) • [Try Free Plan](docs/QUICKSTART.md)
+[Get Started in 5 Minutes](docs/QUICKSTART.md) • [View Demo](https://masuda-hikari.github.io/DevBuddyAI/)
 
 </div>
 
@@ -120,22 +120,6 @@ DevBuddyAI automatically comments on your Pull Requests with detailed code revie
 - **[Privacy Policy](docs/privacy.html)** - How we protect your code
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - Join our community
 
----
-
-## 💰 Pricing
-
-| Plan | Price | Reviews/Month | Use Case |
-|------|-------|---------------|----------|
-| **Free** | ¥0 | 50 | Open Source Projects |
-| **Pro** | **¥1,980/month** | 500 | Individual Developers |
-| **Team** | **¥9,800/month** | Unlimited | Small Teams (up to 10) |
-| **Enterprise** | Custom | Unlimited | Large Organizations |
-
-💡 **Start with the free plan** - No credit card required!
-
-[📖 View Detailed Pricing](https://masuda-hikari.github.io/DevBuddyAI/#pricing)
-
----
 
 ## 🏗️ Advanced Usage
 
@@ -188,24 +172,6 @@ ignore_patterns:
 | TypeScript | Full | Partial | ESLint, tsc |
 | Rust | Full | Partial | clippy, cargo check |
 | Go | Full | Partial | go vet, staticcheck, golangci-lint |
-
-## Pricing
-
-| Plan | Target | Price (USD) | Price (JPY) | Features |
-|------|--------|-------------|-------------|----------|
-| **Free** | Open Source | $0/month | ¥0/月 | 50 reviews/month, public repos only |
-| **Pro** | Individuals | $19/month | ¥1,980/月 | 500 reviews/month, private repos, priority |
-| **Team** | Teams (up to 10) | $99/month | ¥9,800/月 | Unlimited reviews, GitHub integration |
-| **Enterprise** | Organizations | Contact us | 要相談 | Self-hosted, SSO, dedicated support |
-
-### Why Pay for DevBuddyAI?
-
-- **Save Time**: Reduce code review time by 40%
-- **Catch Bugs Early**: AI catches issues humans miss
-- **Consistent Quality**: Enforce coding standards automatically
-- **ROI**: One prevented production bug pays for a year of service
-
-## Security & Privacy
 
 **Your code stays secure.**
 
