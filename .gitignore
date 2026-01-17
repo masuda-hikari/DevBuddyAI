@@ -74,3 +74,18 @@ Desktop.ini
 .Spotlight-V100
 .Trashes
 NUL
+
+# ===================================
+# 機密・内部情報（公開禁止）
+# ===================================
+# Claude設定・ローカル設定
+.claude/settings.local.json
+.claude/DEVELOPMENT_LOG.md
+.claude/REVENUE_METRICS.md
+.claude/SESSION_REPORT.md
+
+# ログ・実行履歴
+logs/
+
+# 法務・個人情報
+docs/legal.html
